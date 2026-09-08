@@ -452,16 +452,28 @@ task.spawn(function()
 end)
 
 -- ==================== 9. KONFIGURASI TEMA & KAMUS TERJEMAHAN ====================
+local function resolveVexxFont(weight)
+    local ok, font = pcall(function()
+        if getcustomasset then
+            local asset = getcustomasset("MADEEvolveSansEVO.ttf")
+            return Font.new(asset, weight or Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+        end
+    end)
+    if ok and font then return font end
+    return (weight == Enum.FontWeight.Bold) and Enum.Font.GothamBold or Enum.Font.GothamMedium
+end
+
 local THEME = {
-    BarBG      = Color3.fromRGB(15, 25, 18),
-    CardBG     = Color3.fromRGB(20, 36, 26),
-    Border     = Color3.fromRGB(40, 80, 50),
-    AccentMint = Color3.fromRGB(0, 230, 120),
-    ToggleOff  = Color3.fromRGB(38, 43, 56),
-    TextMain   = Color3.fromRGB(245, 248, 255),
-    TextSub    = Color3.fromRGB(150, 180, 160),
-    FontB      = Enum.Font.GothamBold,
-    FontM      = Enum.Font.GothamMedium
+    BarBG      = Color3.fromRGB(18, 10, 32),
+    CardBG     = Color3.fromRGB(34, 18, 58),
+    Border     = Color3.fromRGB(139, 92, 246),
+    AccentMint = Color3.fromRGB(180, 110, 255),
+    Accent     = Color3.fromRGB(124, 58, 237),
+    ToggleOff  = Color3.fromRGB(55, 42, 72),
+    TextMain   = Color3.fromRGB(248, 245, 255),
+    TextSub    = Color3.fromRGB(190, 174, 214),
+    FontB      = resolveVexxFont(Enum.FontWeight.Bold),
+    FontM      = resolveVexxFont(Enum.FontWeight.Medium)
 }
 
 local ANIME_BG_URL = "https://i.pinimg.com/originals/7a/4e/8d/7a4e8d7b4e8d7b4e8d7b4e8d7b4e8d7b.jpg"
@@ -476,16 +488,18 @@ local function applyGlassStyle(guiObject)
         glass.Name = "VexxuzzZx_GlassBG"
         glass.Size = UDim2.new(1, 0, 1, 0)
         glass.Position = UDim2.new(0, 0, 0, 0)
-        glass.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        glass.BackgroundColor3 = Color3.fromRGB(35, 20, 55)
         glass.BackgroundTransparency = 0.4
         glass.BorderSizePixel = 0
         glass.ZIndex = 0
 
-        local blur = Instance.new("BlurEffect", glass)
+        local blur = Instance.new("BlurEffect")
+        blur.Name = "VexxuzzZxGlassBlur"
         blur.Size = 8
+        pcall(function() blur.Parent = Lighting end)
 
         local stroke = Instance.new("UIStroke", glass)
-        stroke.Color = Color3.fromRGB(0, 200, 255)
+        stroke.Color = Color3.fromRGB(124, 58, 237)
         stroke.Thickness = 1.5
         stroke.Transparency = 0.5
 
@@ -504,7 +518,7 @@ local function applyGlassStyle(guiObject)
 
         if guiObject:IsA("Frame") or guiObject:IsA("CanvasGroup") then
             guiObject.BackgroundTransparency = 0.7
-            guiObject.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
+            guiObject.BackgroundColor3 = Color3.fromRGB(25, 14, 42)
         end
     end)
 end
@@ -530,8 +544,10 @@ PinBar.BackgroundTransparency = 0.3
 PinBar.BorderSizePixel = 0
 PinBar.Visible = false
 
-local pinBlur = Instance.new("BlurEffect", PinBar)
+local pinBlur = Instance.new("BlurEffect")
+pinBlur.Name = "VexxuzzZxPinBlur"
 pinBlur.Size = 5
+pinBlur.Parent = Lighting
 
 Instance.new("UICorner", PinBar).CornerRadius = UDim.new(0, 8)
 local BarStroke = Instance.new("UIStroke", PinBar)
@@ -582,9 +598,9 @@ BadgeStroke.Thickness = 1.2
 
 local BadgeGrad = Instance.new("UIGradient", BadgeStroke)
 BadgeGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 230, 120)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 230, 120))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 110, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(124, 58, 237)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 110, 255))
 })
 
 local TikTokText = Instance.new("TextLabel", TikTokBadge)
@@ -1031,7 +1047,7 @@ local XenonBlur = Instance.new("BlurEffect", XenonFrame)
 XenonBlur.Size = 10
 
 local XenonStroke = Instance.new("UIStroke", XenonFrame)
-XenonStroke.Color = Color3.fromRGB(0, 200, 255)
+XenonStroke.Color = Color3.fromRGB(124, 58, 237)
 XenonStroke.Thickness = 1.5
 XenonStroke.Transparency = 0.3
 
@@ -1046,7 +1062,7 @@ local XenonTitle = Instance.new("TextLabel", XenonFrame)
 XenonTitle.Size = UDim2.new(1, -20, 0, 30)
 XenonTitle.Position = UDim2.new(0, 10, 0, 10)
 XenonTitle.BackgroundTransparency = 1
-XenonTitle.Font = Enum.Font.FredokaOne
+XenonTitle.Font = THEME.FontB
 XenonTitle.Text = "⚡ Xenon Features"
 XenonTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 XenonTitle.TextSize = 18
@@ -1062,7 +1078,7 @@ local SpeedTextBox = Instance.new("TextBox", SpeedContainer)
 SpeedTextBox.Size = UDim2.new(0, 140, 0, 36)
 SpeedTextBox.Position = UDim2.new(0, 0, 0, 0)
 SpeedTextBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-SpeedTextBox.Font = Enum.Font.FredokaOne
+SpeedTextBox.Font = THEME.FontB
 SpeedTextBox.PlaceholderText = "Bypass Speed"
 SpeedTextBox.Text = "300"
 SpeedTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1075,7 +1091,7 @@ local SubmitSpeedBtn = Instance.new("TextButton", SpeedContainer)
 SubmitSpeedBtn.Size = UDim2.new(0, 90, 0, 36)
 SubmitSpeedBtn.Position = UDim2.new(0, 150, 0, 0)
 SubmitSpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-SubmitSpeedBtn.Font = Enum.Font.FredokaOne
+SubmitSpeedBtn.Font = THEME.FontB
 SubmitSpeedBtn.Text = "Set Speed"
 SubmitSpeedBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 SubmitSpeedBtn.TextSize = 13
@@ -1088,7 +1104,7 @@ local XenonStatus = Instance.new("TextLabel", XenonFrame)
 XenonStatus.Size = UDim2.new(1, -20, 0, 20)
 XenonStatus.Position = UDim2.new(0, 10, 0, 96)
 XenonStatus.BackgroundTransparency = 1
-XenonStatus.Font = Enum.Font.FredokaOne
+XenonStatus.Font = THEME.FontB
 XenonStatus.Text = "Speed: 300"
 XenonStatus.TextColor3 = Color3.fromRGB(180, 180, 180)
 XenonStatus.TextSize = 12
@@ -1098,7 +1114,7 @@ local InstantTPBtn = Instance.new("TextButton", XenonFrame)
 InstantTPBtn.Size = UDim2.new(0, 240, 0, 36)
 InstantTPBtn.Position = UDim2.new(0.5, -120, 0, 130)
 InstantTPBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-InstantTPBtn.Font = Enum.Font.FredokaOne
+InstantTPBtn.Font = THEME.FontB
 InstantTPBtn.Text = "Instant TP to Safe Zone"
 InstantTPBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 InstantTPBtn.TextSize = 14
@@ -1111,7 +1127,7 @@ local GodModeBtn = Instance.new("TextButton", XenonFrame)
 GodModeBtn.Size = UDim2.new(0, 240, 0, 36)
 GodModeBtn.Position = UDim2.new(0.5, -120, 0, 176)
 GodModeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-GodModeBtn.Font = Enum.Font.FredokaOne
+GodModeBtn.Font = THEME.FontB
 GodModeBtn.Text = "God Mode: OFF"
 GodModeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 GodModeBtn.TextSize = 14
@@ -1124,7 +1140,7 @@ local InstantReturnBtn = Instance.new("TextButton", XenonFrame)
 InstantReturnBtn.Size = UDim2.new(0, 240, 0, 36)
 InstantReturnBtn.Position = UDim2.new(0.5, -120, 0, 222)
 InstantReturnBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-InstantReturnBtn.Font = Enum.Font.FredokaOne
+InstantReturnBtn.Font = THEME.FontB
 InstantReturnBtn.Text = "Instant Return: OFF"
 InstantReturnBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 InstantReturnBtn.TextSize = 14

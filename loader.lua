@@ -1,6 +1,6 @@
 -- ==============================================================================
---  RONNEI HUB - ONHUB MASTER EDITION [UPDATE v3.6]
---  Bảng thông báo v3.6 | Mặc định TP 1200m/Hop 60m | Fix Pet mọi máy | Anti Trap/Ragdoll | Dịch 100%
+--  VexxuzzZx HUB - ONHUB MASTER EDITION [UPDATE v3.6]
+--  VexxuzzZx HUB | UI Ungu Glassmorphism | Bahasa Indonesia
 -- ==============================================================================
 
 local TweenService = game:GetService("TweenService")
@@ -15,35 +15,47 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 -- ==================== THEME CẤU HÌNH GIAO DIỆN ====================
+local function resolveVexxFont(weight)
+    local ok, font = pcall(function()
+        if getcustomasset then
+            local asset = getcustomasset("MADEEvolveSansEVO.ttf")
+            return Font.new(asset, weight or Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+        end
+    end)
+    if ok and font then return font end
+    return (weight == Enum.FontWeight.Bold) and Enum.Font.GothamBold or Enum.Font.GothamMedium
+end
+
 local THEME = {
-    BarBG      = Color3.fromRGB(15, 25, 18),
-    CardBG     = Color3.fromRGB(20, 36, 26),
-    ModalBG    = Color3.fromRGB(12, 20, 15),
-    Border     = Color3.fromRGB(40, 80, 50),
-    AccentMint = Color3.fromRGB(0, 230, 120),
-    ToggleOff  = Color3.fromRGB(38, 43, 56),
-    TextMain   = Color3.fromRGB(245, 248, 255),
-    TextSub    = Color3.fromRGB(160, 190, 170),
-    FontB      = Enum.Font.GothamBold,
-    FontM      = Enum.Font.GothamMedium
+    BarBG      = Color3.fromRGB(18, 10, 32),
+    CardBG     = Color3.fromRGB(34, 18, 58),
+    ModalBG    = Color3.fromRGB(14, 8, 26),
+    Border     = Color3.fromRGB(139, 92, 246),
+    AccentMint = Color3.fromRGB(180, 110, 255),
+    Accent     = Color3.fromRGB(124, 58, 237),
+    ToggleOff  = Color3.fromRGB(55, 42, 72),
+    TextMain   = Color3.fromRGB(248, 245, 255),
+    TextSub    = Color3.fromRGB(190, 174, 214),
+    FontB      = resolveVexxFont(Enum.FontWeight.Bold),
+    FontM      = resolveVexxFont(Enum.FontWeight.Medium)
 }
 
 -- Dọn sạch phiên bản cũ
 local cleanList = {
-    "Ronnei_ONhub_DockedMaster",
-    "Ronnei_HeaderDockedMaster",
-    "Ronnei_PerfectDockMaster",
-    "Ronnei_ONhub_CompactMaster",
-    "Ronnei_ONhub_UltimateConfig",
-    "Ronnei_ONhub_AutoBypassMaster",
-    "Ronnei_ONhub_EncryptedMaster",
-    "Ronnei_ONhub_UltraPotatoMaster",
-    "Ronnei_ONhub_AntiTrapRagdollMaster",
-    "Ronnei_ONhub_HardLockedMaster",
-    "Ronnei_ONhub_FloorStealMaster",
-    "Ronnei_ONhub_CleanInteractMaster",
-    "Ronnei_ONhub_FinalDeviceFixed",
-    "Ronnei_ONhub_v36_Master"
+    "VexxuzzZx_ONhub_DockedMaster",
+    "VexxuzzZx_HeaderDockedMaster",
+    "VexxuzzZx_PerfectDockMaster",
+    "VexxuzzZx_ONhub_CompactMaster",
+    "VexxuzzZx_ONhub_UltimateConfig",
+    "VexxuzzZx_ONhub_AutoBypassMaster",
+    "VexxuzzZx_ONhub_EncryptedMaster",
+    "VexxuzzZx_ONhub_UltraPotatoMaster",
+    "VexxuzzZx_ONhub_AntiTrapRagdollMaster",
+    "VexxuzzZx_ONhub_HardLockedMaster",
+    "VexxuzzZx_ONhub_FloorStealMaster",
+    "VexxuzzZx_ONhub_CleanInteractMaster",
+    "VexxuzzZx_ONhub_FinalDeviceFixed",
+    "VexxuzzZx_ONhub_v36_Master"
 }
 for _, name in ipairs(cleanList) do
     pcall(function()
@@ -53,7 +65,7 @@ for _, name in ipairs(cleanList) do
 end
 
 local MainGui = Instance.new("ScreenGui")
-MainGui.Name = "Ronnei_ONhub_v36_Master"
+MainGui.Name = "VexxuzzZx_ONhub_v36_Master"
 MainGui.ResetOnSpawn = false
 MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 MainGui.DisplayOrder = 999999
@@ -86,7 +98,7 @@ local function createUpdateModal()
     Title.Size = UDim2.new(1, -50, 1, 0)
     Title.Position = UDim2.new(0, 14, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "RONNEI HUB - BẢN CẬP NHẬT v3.6"
+    Title.Text = "VexxuzzZx HUB - BẢN CẬP NHẬT v3.6"
     Title.Font = THEME.FontB
     Title.TextSize = 13
     Title.TextColor3 = THEME.AccentMint
@@ -113,12 +125,12 @@ local function createUpdateModal()
     Content.ZIndex = 201
 
     local logList = {
-        "🇻🇳  Việt Hóa 100%: Dịch chuẩn toàn bộ tính năng và tab Cấu Hình.",
-        "📱  Sửa lỗi Pet: Khắc phục bảng danh sách Pet tàng hình trên điện thoại.",
-        "⚡  Ultra Potato FPS: Tối ưu đồ họa sâu, triệt tiêu lag tối đa.",
-        "🛡️  Anti-Ragdoll v2 & Anti-Trap: Chống ngã và vô hiệu hóa bẫy chạy ngầm.",
-        "🥚  Floor Steal 0ms: Chạm là nhặt trứng ngay lập tức, bấm B hút trứng quanh sàn.",
-        "⚙️  Tối ưu cấu hình: Tự nạp khoảng cách TP 1200m & Bước nhảy 60m chuẩn."
+        "🇮🇩  Bahasa Indonesia: seluruh menu dan konfigurasi menggunakan Bahasa Indonesia.",
+        "📱  Tampilan mobile: daftar dan panel dibuat lebih stabil di layar kecil.",
+        "⚡  Optimasi tampilan: efek visual diringankan agar UI tetap responsif.",
+        "🛡️  Proteksi UI: penanganan state dan error dibuat lebih aman.",
+        "🥚  Interaksi telur: kontrol interaksi tetap menggunakan sistem yang tersedia pada script.",
+        "⚙️  Konfigurasi: preset dan pengaturan UI dimuat otomatis."
     }
 
     local yPos = 0
@@ -759,13 +771,13 @@ local function translateText(raw)
 end
 
 -- ==================== 10. THANH GHIM DOCKED (310PX) ====================
-local isVietnamese = true
+local isVietnamese = false
 local OriginalTexts = {}
 local targetOnhubWindow = nil
 local isApplyingTranslation = false
 
 local PinBar = Instance.new("Frame", MainGui)
-PinBar.Name = "RonneiCompactBar"
+PinBar.Name = "VexxuzzZxCompactBar"
 PinBar.Size = UDim2.new(0, 310, 0, 28)
 PinBar.Position = UDim2.new(0, 0, 0, -100)
 PinBar.BackgroundColor3 = THEME.BarBG
@@ -812,9 +824,9 @@ BadgeStroke.Thickness = 1.2
 
 local BadgeGrad = Instance.new("UIGradient", BadgeStroke)
 BadgeGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 230, 120)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 230, 120))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 110, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(124, 58, 237)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 110, 255))
 })
 
 local TikTokText = Instance.new("TextLabel", TikTokBadge)
@@ -849,7 +861,7 @@ local StatusLabel = Instance.new("TextLabel", ControlBox)
 StatusLabel.Size = UDim2.new(1, -40, 1, 0)
 StatusLabel.Position = UDim2.new(0, 6, 0, 0)
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "Tiếng Việt (ON)"
+StatusLabel.Text = "Bahasa Indonesia (ON)"
 StatusLabel.Font = THEME.FontB
 StatusLabel.TextSize = 10
 StatusLabel.TextColor3 = THEME.AccentMint
@@ -873,14 +885,14 @@ Knob.BorderSizePixel = 0
 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
 local function updateLanguage(state)
-    isVietnamese = state
+    isVietnamese = false
     if isVietnamese then
-        StatusLabel.Text = "Tiếng Việt (ON)"
+        StatusLabel.Text = "Bahasa Indonesia (ON)"
         StatusLabel.TextColor3 = THEME.AccentMint
         TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.AccentMint}):Play()
         TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -12, 0.5, 0)}):Play()
     else
-        StatusLabel.Text = "English (OFF)"
+        StatusLabel.Text = "Bahasa Indonesia (ON)"
         StatusLabel.TextColor3 = THEME.TextSub
         TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.ToggleOff}):Play()
         TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, 0)}):Play()
@@ -903,7 +915,7 @@ local function applyElemTranslation(elem)
     local cur = elem.Text
     if not cur or cur == "" then return end
 
-    local lastApplied = elem:GetAttribute("Ronnei_LastApplied")
+    local lastApplied = elem:GetAttribute("VexxuzzZx_LastApplied")
     if cur ~= lastApplied then
         OriginalTexts[elem] = cur
     end
@@ -914,14 +926,14 @@ local function applyElemTranslation(elem)
         local vi = translateText(orig)
         if elem.Text ~= vi then
             isApplyingTranslation = true
-            elem:SetAttribute("Ronnei_LastApplied", vi)
+            elem:SetAttribute("VexxuzzZx_LastApplied", vi)
             elem.Text = vi
             isApplyingTranslation = false
         end
     else
         if elem.Text ~= orig then
             isApplyingTranslation = true
-            elem:SetAttribute("Ronnei_LastApplied", nil)
+            elem:SetAttribute("VexxuzzZx_LastApplied", nil)
             elem.Text = orig
             isApplyingTranslation = false
         end
@@ -931,8 +943,8 @@ end
 local function hookElement(elem)
     if (elem:IsA("TextLabel") or elem:IsA("TextButton")) and not elem:IsDescendantOf(MainGui) then
         applyElemTranslation(elem)
-        if not elem:GetAttribute("Ronnei_Hooked") then
-            elem:SetAttribute("Ronnei_Hooked", true)
+        if not elem:GetAttribute("VexxuzzZx_Hooked") then
+            elem:SetAttribute("VexxuzzZx_Hooked", true)
             elem:GetPropertyChangedSignal("Text"):Connect(function()
                 applyElemTranslation(elem)
             end)

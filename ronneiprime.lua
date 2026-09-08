@@ -9,15 +9,15 @@ local CoreGui = (gethui and gethui()) or game:GetService("CoreGui")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 
 -- Dọn dẹp phiên bản cũ
-if CoreGui:FindFirstChild("RonneiHub_Master") then
-    CoreGui.RonneiHub_Master:Destroy()
+if CoreGui:FindFirstChild("VexxuzzZxHub_Master") then
+    CoreGui.VexxuzzZxHub_Master:Destroy()
 end
 
 local BRAND = {
-    Name       = "Ronnei Hub",
-    SubTitle   = "v1.0 • Steal An Egg",
+    Name       = "VexxuzzZx Hub",
+    SubTitle   = "v1.0 • VexxuzzZx",
     Avatar     = "rbxassetid://125111940452696",
-    TikTokTag  = "TikTok: ronnei7.htk"
+    TikTokTag  = "TikTok: vexxuzzZx7.htk"
 }
 
 local THEME = {
@@ -60,14 +60,14 @@ end
 
 -- ==================== SCREEN GUI CHÍNH ====================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RonneiHub_Master"
+ScreenGui.Name = "VexxuzzZxHub_Master"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = CoreGui
 
 -- Nút Avatar tròn mở Menu ngoài màn hình
 local ToggleBtn = Instance.new("ImageButton")
-ToggleBtn.Name = "RonneiAvatarToggle"
+ToggleBtn.Name = "VexxuzzZxAvatarToggle"
 ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
 ToggleBtn.Position = UDim2.new(0, 20, 0, 150)
 ToggleBtn.BackgroundColor3 = THEME.WindowBG
@@ -82,7 +82,7 @@ ToggleStroke.Thickness = 2.4
 ToggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 makeDraggable(ToggleBtn, ToggleBtn)
 
--- Khung Menu Chính Ronnei Hub
+-- Khung Menu Chính VexxuzzZx Hub
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 600, 0, 380)
@@ -272,7 +272,7 @@ local function applyLennonWindow(window)
         end
     end
 
-    -- Lắng nghe khi Ronnei Hub bật/tắt
+    -- Lắng nghe khi VexxuzzZx Hub bật/tắt
     if not window:GetAttribute("Synced") then
         window:SetAttribute("Synced", true)
         MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
