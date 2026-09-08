@@ -1,8 +1,6 @@
 -- ==============================================================================
---  VexxuzzZx HUB - ONHUB MASTER (PRESET 1200m/60m + FAILSAFE TRANSLATOR)
---  Default: TP 1200m | Hop 60m | Aliran terjemahan terisolasi 100% | Pertahankan tabel Pet
---  + Tampilan Kaca + Anime (Gaya Keren) & Bahasa Indonesia
---  + FITUR XENON: God Mode, Bypass Speed, Instant TP, Auto Return Instant
+--  RONNEI HUB - ONHUB MASTER (PRESET 1200m/60m + FAILSAFE TRANSLATOR)
+--  Mặc định: TP 1200m | Hop 60m | Luồng dịch cách ly 100% | Giữ nguyên bảng Pet
 -- ==============================================================================
 
 local TweenService = game:GetService("TweenService")
@@ -16,7 +14,7 @@ local Terrain = Workspace:FindFirstChildOfClass("Terrain")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- ==================== 1. MUAT DEFAULT 2 SLIDER (MEMORI + ANTARMUKA) ====================
+-- ==================== 1. NẠP MẶC ĐỊNH 2 THANH TRƯỢT (BỘ NHỚ + GIAO DIỆN) ====================
 local presetMemoryDone = false
 local presetUIDone = false
 
@@ -52,8 +50,9 @@ local function applyUISliderPresets(root)
         for _, label in ipairs(root:GetDescendants()) do
             if label:IsA("TextLabel") then
                 local txt = label.Text
-                if not tpFound and (txt:find("Jarak minimum untuk TP") or txt:find("Minimum distance for TP")) then
-                    label.Text = "Jarak minimum untuk TP: 1200 meter"
+                -- Thanh TP: 1200 mét
+                if not tpFound and (txt:find("Khoảng cách tối thiểu để TP") or txt:find("Minimum distance for TP")) then
+                    label.Text = "Khoảng cách tối thiểu để TP: 1200 mét"
                     local row = label.Parent
                     if row then
                         for _, child in ipairs(row:GetDescendants()) do
@@ -64,8 +63,9 @@ local function applyUISliderPresets(root)
                             end
                         end
                     end
-                elseif not hopFound and (txt:find("Langkah lompat") or txt:find("Hop step")) then
-                    label.Text = "Langkah lompat (rendah = aman): 60 meter"
+                -- Thanh Hop: 60 mét
+                elseif not hopFound and (txt:find("Độ dài bước nhảy") or txt:find("Hop step")) then
+                    label.Text = "Độ dài bước nhảy (thấp = an toàn): 60 mét"
                     local row = label.Parent
                     if row then
                         for _, child in ipairs(row:GetDescendants()) do
@@ -117,6 +117,7 @@ task.spawn(function()
         firePrompt(prompt)
     end)
 
+    -- Phím tắt B chủ động kích hoạt
     UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.B then
@@ -269,7 +270,7 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 5. MODULE POTATO MODE ====================
+-- ==================== 5. MODULE POTATO MODE (KHÔNG CAN THIỆP GIAO DIỆN PET) ====================
 task.spawn(function()
     pcall(function()
         if settings and settings().Rendering then
@@ -327,23 +328,23 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 6. BERSIHKAN PIN LAMA ====================
+-- ==================== 6. DỌN SẠCH BẢN GHIM CŨ ====================
 local cleanList = {
-    "VexxuzzZx_ONhub_DockedMaster",
-    "VexxuzzZx_HeaderDockedMaster",
-    "VexxuzzZx_PerfectDockMaster",
-    "VexxuzzZx_ONhub_CompactMaster",
-    "VexxuzzZx_ONhub_UltimateConfig",
-    "VexxuzzZx_ONhub_AutoBypassMaster",
-    "VexxuzzZx_ONhub_EncryptedMaster",
-    "VexxuzzZx_ONhub_UltraPotatoMaster",
-    "VexxuzzZx_ONhub_AntiTrapRagdollMaster",
-    "VexxuzzZx_ONhub_HardLockedMaster",
-    "VexxuzzZx_ONhub_FloorStealMaster",
-    "VexxuzzZx_ONhub_CleanInteractMaster",
-    "VexxuzzZx_ONhub_FinalDeviceFixed",
-    "VexxuzzZx_ONhub_UntouchedPetsMaster",
-    "VexxuzzZx_ONhub_FailsafeMaster"
+    "Ronnei_ONhub_DockedMaster",
+    "Ronnei_HeaderDockedMaster",
+    "Ronnei_PerfectDockMaster",
+    "Ronnei_ONhub_CompactMaster",
+    "Ronnei_ONhub_UltimateConfig",
+    "Ronnei_ONhub_AutoBypassMaster",
+    "Ronnei_ONhub_EncryptedMaster",
+    "Ronnei_ONhub_UltraPotatoMaster",
+    "Ronnei_ONhub_AntiTrapRagdollMaster",
+    "Ronnei_ONhub_HardLockedMaster",
+    "Ronnei_ONhub_FloorStealMaster",
+    "Ronnei_ONhub_CleanInteractMaster",
+    "Ronnei_ONhub_FinalDeviceFixed",
+    "Ronnei_ONhub_UntouchedPetsMaster",
+    "Ronnei_ONhub_FailsafeMaster"
 }
 for _, name in ipairs(cleanList) do
     pcall(function()
@@ -429,7 +430,7 @@ task.spawn(function()
     end
 end)
 
--- ==================== 8. MUAT SCRIPT TERENKRIPSI ASLI ====================
+-- ==================== 8. NẠP MÃ HÓA SCRIPT GỐC ====================
 task.spawn(function()
     pcall(function()
         local _byteStream = {
@@ -451,544 +452,129 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 9. KONFIGURASI TEMA & KAMUS TERJEMAHAN ====================
-local function resolveVexxFont(weight)
-    local ok, font = pcall(function()
-        if getcustomasset then
-            local asset = getcustomasset("MADEEvolveSansEVO.ttf")
-            return Font.new(asset, weight or Enum.FontWeight.Medium, Enum.FontStyle.Normal)
-        end
-    end)
-    if ok and font then return font end
-    return (weight == Enum.FontWeight.Bold) and Enum.Font.GothamBold or Enum.Font.GothamMedium
-end
-
+-- ==================== 9. CẤU HÌNH GIAO DIỆN & TỪ ĐIỂN DỊCH ====================
 local THEME = {
-    BarBG      = Color3.fromRGB(18, 10, 32),
-    CardBG     = Color3.fromRGB(34, 18, 58),
-    Border     = Color3.fromRGB(139, 92, 246),
-    AccentMint = Color3.fromRGB(180, 110, 255),
-    Accent     = Color3.fromRGB(124, 58, 237),
-    ToggleOff  = Color3.fromRGB(55, 42, 72),
-    TextMain   = Color3.fromRGB(248, 245, 255),
-    TextSub    = Color3.fromRGB(190, 174, 214),
-    FontB      = resolveVexxFont(Enum.FontWeight.Bold),
-    FontM      = resolveVexxFont(Enum.FontWeight.Medium)
+    BarBG      = Color3.fromRGB(15, 25, 18),
+    CardBG     = Color3.fromRGB(20, 36, 26),
+    Border     = Color3.fromRGB(40, 80, 50),
+    AccentMint = Color3.fromRGB(0, 230, 120),
+    ToggleOff  = Color3.fromRGB(38, 43, 56),
+    TextMain   = Color3.fromRGB(245, 248, 255),
+    TextSub    = Color3.fromRGB(150, 180, 160),
+    FontB      = Enum.Font.GothamBold,
+    FontM      = Enum.Font.GothamMedium
 }
 
-local ANIME_BG_URL = "https://i.pinimg.com/originals/7a/4e/8d/7a4e8d7b4e8d7b4e8d7b4e8d7b4e8d7b.jpg"
-local glassApplied = false
-
-local function applyGlassStyle(guiObject)
-    if not guiObject or not guiObject:IsA("GuiObject") then return end
-    pcall(function()
-        if guiObject:FindFirstChild("VexxuzzZx_GlassBG") then return end
-
-        local glass = Instance.new("Frame")
-        glass.Name = "VexxuzzZx_GlassBG"
-        glass.Size = UDim2.new(1, 0, 1, 0)
-        glass.Position = UDim2.new(0, 0, 0, 0)
-        glass.BackgroundColor3 = Color3.fromRGB(35, 20, 55)
-        glass.BackgroundTransparency = 0.4
-        glass.BorderSizePixel = 0
-        glass.ZIndex = 0
-
-        local blur = Instance.new("BlurEffect")
-        blur.Name = "VexxuzzZxGlassBlur"
-        blur.Size = 8
-        pcall(function() blur.Parent = Lighting end)
-
-        local stroke = Instance.new("UIStroke", glass)
-        stroke.Color = Color3.fromRGB(124, 58, 237)
-        stroke.Thickness = 1.5
-        stroke.Transparency = 0.5
-
-        local corner = Instance.new("UICorner", glass)
-        corner.CornerRadius = UDim.new(0, 12)
-
-        local bgImg = Instance.new("ImageLabel", glass)
-        bgImg.Size = UDim2.new(1, 0, 1, 0)
-        bgImg.BackgroundTransparency = 1
-        bgImg.Image = ANIME_BG_URL
-        bgImg.ScaleType = Enum.ScaleType.Crop
-        bgImg.ZIndex = 0
-
-        glass.Parent = guiObject
-        glass.ZIndex = -1
-
-        if guiObject:IsA("Frame") or guiObject:IsA("CanvasGroup") then
-            guiObject.BackgroundTransparency = 0.7
-            guiObject.BackgroundColor3 = Color3.fromRGB(25, 14, 42)
-        end
-    end)
-end
-
--- ==================== 10. PIN BAR DOCKED (310PX) ====================
-local isIndonesian = true
-local OriginalTexts = {}
-local targetOnhubWindow = nil
-
-local PinGui = Instance.new("ScreenGui")
-PinGui.Name = "VexxuzzZx_ONhub_FailsafeMaster"
-PinGui.ResetOnSpawn = false
-PinGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-PinGui.DisplayOrder = 999999
-PinGui.Parent = (gethui and gethui()) or CoreGuiService
-
-local PinBar = Instance.new("Frame", PinGui)
-PinBar.Name = "VexxuzzZxCompactBar"
-PinBar.Size = UDim2.new(0, 310, 0, 28)
-PinBar.Position = UDim2.new(0, 0, 0, -100)
-PinBar.BackgroundColor3 = THEME.BarBG
-PinBar.BackgroundTransparency = 0.3
-PinBar.BorderSizePixel = 0
-PinBar.Visible = false
-
-local pinBlur = Instance.new("BlurEffect")
-pinBlur.Name = "VexxuzzZxPinBlur"
-pinBlur.Size = 5
-pinBlur.Parent = Lighting
-
-Instance.new("UICorner", PinBar).CornerRadius = UDim.new(0, 8)
-local BarStroke = Instance.new("UIStroke", PinBar)
-BarStroke.Color = THEME.AccentMint
-BarStroke.Thickness = 1.5
-BarStroke.Transparency = 0.4
-
-local pinBg = Instance.new("ImageLabel", PinBar)
-pinBg.Size = UDim2.new(1, 0, 1, 0)
-pinBg.BackgroundTransparency = 1
-pinBg.Image = ANIME_BG_URL
-pinBg.ScaleType = Enum.ScaleType.Crop
-pinBg.ZIndex = 0
-
-local dragging, dragStart, startWinPos = false, nil, nil
-PinBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        if targetOnhubWindow and targetOnhubWindow.Parent then
-            dragging = true
-            dragStart = input.Position
-            startWinPos = targetOnhubWindow.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        if targetOnhubWindow and targetOnhubWindow.Parent then
-            local delta = input.Position - dragStart
-            targetOnhubWindow.Position = UDim2.new(startWinPos.X.Scale, startWinPos.X.Offset + delta.X, startWinPos.Y.Scale, startWinPos.Y.Offset + delta.Y)
-        end
-    end
-end)
-
-local TikTokBadge = Instance.new("Frame", PinBar)
-TikTokBadge.Size = UDim2.new(0, 135, 0, 20)
-TikTokBadge.Position = UDim2.new(0, 4, 0.5, 0)
-TikTokBadge.AnchorPoint = Vector2.new(0, 0.5)
-TikTokBadge.BackgroundColor3 = THEME.CardBG
-TikTokBadge.BackgroundTransparency = 0.4
-Instance.new("UICorner", TikTokBadge).CornerRadius = UDim.new(1, 0)
-
-local BadgeStroke = Instance.new("UIStroke", TikTokBadge)
-BadgeStroke.Color = THEME.AccentMint
-BadgeStroke.Thickness = 1.2
-
-local BadgeGrad = Instance.new("UIGradient", BadgeStroke)
-BadgeGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 110, 255)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(124, 58, 237)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 110, 255))
-})
-
-local TikTokText = Instance.new("TextLabel", TikTokBadge)
-TikTokText.Size = UDim2.new(1, 0, 1, 0)
-TikTokText.BackgroundTransparency = 1
-TikTokText.Text = "TikTok: ronnei7.htk"
-TikTokText.Font = THEME.FontB
-TikTokText.TextSize = 10
-TikTokText.TextColor3 = THEME.TextMain
-
-task.spawn(function()
-    local rot = 0
-    while TikTokBadge.Parent do
-        rot = (rot + 3) % 360
-        BadgeGrad.Rotation = rot
-        task.wait(0.04)
-    end
-end)
-
-local ControlBox = Instance.new("Frame", PinBar)
-ControlBox.Size = UDim2.new(0, 160, 0, 22)
-ControlBox.Position = UDim2.new(1, -4, 0.5, 0)
-ControlBox.AnchorPoint = Vector2.new(1, 0.5)
-ControlBox.BackgroundColor3 = THEME.CardBG
-ControlBox.BackgroundTransparency = 0.4
-Instance.new("UICorner", ControlBox).CornerRadius = UDim.new(0, 8)
-
-local BoxStroke = Instance.new("UIStroke", ControlBox)
-BoxStroke.Color = THEME.Border
-BoxStroke.Thickness = 1
-
-local StatusLabel = Instance.new("TextLabel", ControlBox)
-StatusLabel.Size = UDim2.new(1, -40, 1, 0)
-StatusLabel.Position = UDim2.new(0, 6, 0, 0)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "Bahasa Indonesia (ON)"
-StatusLabel.Font = THEME.FontB
-StatusLabel.TextSize = 10
-StatusLabel.TextColor3 = THEME.AccentMint
-StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-local SwitchBtn = Instance.new("TextButton", ControlBox)
-SwitchBtn.Size = UDim2.new(0, 30, 0, 14)
-SwitchBtn.Position = UDim2.new(1, -34, 0.5, 0)
-SwitchBtn.AnchorPoint = Vector2.new(0, 0.5)
-SwitchBtn.BackgroundColor3 = THEME.AccentMint
-SwitchBtn.Text = ""
-SwitchBtn.AutoButtonColor = false
-Instance.new("UICorner", SwitchBtn).CornerRadius = UDim.new(1, 0)
-
-local Knob = Instance.new("Frame", SwitchBtn)
-Knob.Size = UDim2.new(0, 10, 0, 10)
-Knob.Position = UDim2.new(1, -12, 0.5, 0)
-Knob.AnchorPoint = Vector2.new(0, 0.5)
-Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Knob.BorderSizePixel = 0
-Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-
-local function updateLanguage(state)
-    isIndonesian = state
-    if isIndonesian then
-        StatusLabel.Text = "Bahasa Indonesia (ON)"
-        StatusLabel.TextColor3 = THEME.AccentMint
-        TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.AccentMint}):Play()
-        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -12, 0.5, 0)}):Play()
-    else
-        StatusLabel.Text = "English (OFF)"
-        StatusLabel.TextColor3 = THEME.TextSub
-        TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.ToggleOff}):Play()
-        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, 0)}):Play()
-    end
-end
-
-SwitchBtn.MouseButton1Click:Connect(function() updateLanguage(not isIndonesian) end)
-ControlBox.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        updateLanguage(not isIndonesian)
-    end
-end)
-
--- ================ TAMBAHAN: Tombol Toggle Panel Xenon ================
-local XenonToggleBtn = Instance.new("TextButton", ControlBox)
-XenonToggleBtn.Size = UDim2.new(0, 20, 0, 14)
-XenonToggleBtn.Position = UDim2.new(0, 80, 0.5, 0)
-XenonToggleBtn.AnchorPoint = Vector2.new(0, 0.5)
-XenonToggleBtn.BackgroundColor3 = THEME.AccentMint
-XenonToggleBtn.Text = "⚙"
-XenonToggleBtn.TextColor3 = THEME.TextMain
-XenonToggleBtn.TextSize = 12
-XenonToggleBtn.Font = THEME.FontB
-XenonToggleBtn.AutoButtonColor = false
-Instance.new("UICorner", XenonToggleBtn).CornerRadius = UDim.new(1, 0)
-
--- ==================== 11. MESIN TERJEMAHAN INSTAN ====================
-local translatingSet = {}
-
-local function applyElemTranslation(elem)
-    if translatingSet[elem] then return end
-    if not (elem:IsA("TextLabel") or elem:IsA("TextButton")) then return end
-    if elem:IsDescendantOf(PinGui) then return end
-    if elem:IsDescendantOf(XenonGui) then return end  -- jangan terjemahkan panel Xenon
-
-    local cur = elem.Text
-    if not cur or cur == "" then return end
-
-    local lastApplied = elem:GetAttribute("VexxuzzZx_LastApplied")
-    if cur ~= lastApplied then
-        OriginalTexts[elem] = cur
-    end
-
-    local orig = OriginalTexts[elem] or cur
-
-    if isIndonesian then
-        local id = translateText(orig)
-        if elem.Text ~= id then
-            translatingSet[elem] = true
-            pcall(function()
-                elem:SetAttribute("VexxuzzZx_LastApplied", id)
-                elem.Text = id
-            end)
-            translatingSet[elem] = nil
-        end
-    else
-        if elem.Text ~= orig then
-            translatingSet[elem] = true
-            pcall(function()
-                elem:SetAttribute("VexxuzzZx_LastApplied", nil)
-                elem.Text = orig
-            end)
-            translatingSet[elem] = nil
-        end
-    end
-end
-
-local function hookElement(elem)
-    if (elem:IsA("TextLabel") or elem:IsA("TextButton")) and not elem:IsDescendantOf(PinGui) and not elem:IsDescendantOf(XenonGui) then
-        pcall(applyElemTranslation, elem)
-        if not elem:GetAttribute("VexxuzzZx_Hooked") then
-            elem:SetAttribute("VexxuzzZx_Hooked", true)
-            elem:GetPropertyChangedSignal("Text"):Connect(function()
-                pcall(applyElemTranslation, elem)
-            end)
-        end
-    end
-end
-
--- ==================== 12. PENCARIAN JENDELA ONHUB ====================
-local IDENTIFIERS = {
-    "FARM", "PANEN",
-    "PETS", "HEWAN",
-    "CONFIG", "PENGATURAN",
-    "START FARM", "MULAI PANEN",
-    "TARGET FILTER", "FILTER TARGET"
-}
-
-local function isDiscordWindow(win)
-    for _, d in ipairs(win:GetDescendants()) do
-        if (d:IsA("TextLabel") or d:IsA("TextButton")) and (d.Text:find("CONTINUE TO HUB", 1, true) or d.Text:find("JOIN OUR DISCORD", 1, true)) then
-            return true
-        end
-    end
-    return false
-end
-
-local function findOnhubWindow()
-    local function scanRoot(root)
-        if not root then return nil end
-        local ok, descs = pcall(function() return root:GetDescendants() end)
-        if not ok or not descs then return nil end
-        for _, obj in ipairs(descs) do
-            if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and not obj:IsDescendantOf(PinGui) and not obj:IsDescendantOf(XenonGui) then
-                local t = obj.Text
-                if t and #t > 0 then
-                    for _, id in ipairs(IDENTIFIERS) do
-                        if t == id or t:find(id, 1, true) then
-                            local p = obj
-                            while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= root do
-                                p = p.Parent
-                            end
-                            if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
-                                if not isDiscordWindow(p) then return p end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        return nil
-    end
-
-    local found = nil
-    if gethui then found = scanRoot(gethui()) end
-    if not found then found = scanRoot(CoreGuiService) end
-    if not found and LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then found = scanRoot(LocalPlayer.PlayerGui) end
-    if not found and getinstances then
-        for _, ins in ipairs(getinstances()) do
-            if (ins:IsA("TextLabel") or ins:IsA("TextButton")) and not ins:IsDescendantOf(PinGui) and not ins:IsDescendantOf(XenonGui) then
-                local t = ins.Text
-                if t == "CONFIG" or t == "PENGATURAN" or t == "FARM" or t == "PANEN" or t == "START FARM" then
-                    local p = ins
-                    while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= game do
-                        p = p.Parent
-                    end
-                    if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
-                        if not isDiscordWindow(p) then return p end
-                    end
-                end
-            end
-        end
-    end
-    return found
-end
-
--- ==================== 13. SINKRONISASI TAMPILAN OTOMATIS ====================
-RunService.RenderStepped:Connect(function()
-    if targetOnhubWindow and targetOnhubWindow.Parent then
-        local winSize = targetOnhubWindow.AbsoluteSize
-        local winPos = targetOnhubWindow.AbsolutePosition
-
-        local isShowing = targetOnhubWindow.Visible and winSize.Y > 100 and winPos.Y > -100 and winPos.Y < 2000
-
-        if isShowing then
-            PinBar.Visible = true
-            PinBar.Position = UDim2.new(0, winPos.X + 4, 0, winPos.Y + 3)
-            PinBar.Size = UDim2.new(0, 310, 0, 28)
-        else
-            PinBar.Visible = false
-        end
-    else
-        PinBar.Visible = false
-    end
-end)
-
--- ==================== 14. LOOP TERJEMAHAN ====================
-task.spawn(function()
-    while true do
-        pcall(function()
-            if not targetOnhubWindow or not targetOnhubWindow.Parent then
-                targetOnhubWindow = findOnhubWindow()
-                if targetOnhubWindow and not glassApplied then
-                    applyGlassStyle(targetOnhubWindow)
-                    glassApplied = true
-                end
-            end
-
-            if targetOnhubWindow then
-                local rootScreen = targetOnhubWindow:FindFirstAncestorOfClass("ScreenGui")
-                local targetContainer = rootScreen or targetOnhubWindow
-
-                for _, elem in ipairs(targetContainer:GetDescendants()) do
-                    hookElement(elem)
-                end
-            end
-        end)
-        task.wait(0.25)
-    end
-end)
-
--- ==================== 15. LOOP PENERAPAN SLIDER ====================
-task.spawn(function()
-    while true do
-        pcall(function()
-            if not presetMemoryDone then
-                applyMemoryPresets()
-            end
-
-            if targetOnhubWindow and not presetUIDone then
-                applyUISliderPresets(targetOnhubWindow)
-            end
-        end)
-        if presetMemoryDone and presetUIDone then
-            break
-        end
-        task.wait(0.5)
-    end
-end)
-
--- ==================== 16. KAMUS BAHASA INDONESIA ====================
 local RAW_TRANSLATIONS = {
-    {"Fast mode (grab the closest)", "Mode cepat (ambil yang terdekat)"},
-    {"Selected pets only", "Hanya hewan pilihan"},
-    {"Mutated eggs only", "Hanya telur mutasi"},
-    {"Skip eggs with a player within [PvP]:", "Lewati telur jika ada pemain dalam [PvP]:"},
-    {"Skip eggs with a player within [PvP]", "Lewati telur jika ada pemain dalam [PvP]"},
-    {"Minimum rarity:", "Kelangkaan minimum:"},
-    {"Minimum rarity", "Kelangkaan minimum"},
-    {"Maximum target distance:", "Jarak target maksimum:"},
-    {"Maximum target distance", "Jarak target maksimum"},
-    {"TARGET FILTER", "FILTER TARGET"},
-    {"On, the ranking is $/s by the game's own formula and the weights above are inert (distance only counts when the instant TP is unusable).", "Jika aktif, peringkat berdasarkan $/s sesuai formula game dan bobot di atas tidak aktif (jarak hanya dipakai saat TP instan tidak bisa)."},
-    {"Rank by pure $/s", "Urutkan berdasarkan $/s murni"},
-    {"Rarity weight:", "Bobot kelangkaan:"},
-    {"Rarity weight", "Bobot kelangkaan"},
-    {"Mutation weight:", "Bobot mutasi:"},
-    {"Mutation weight", "Bobot mutasi"},
-    {"Size weight:", "Bobot ukuran:"},
-    {"Size weight", "Bobot ukuran"},
-    {"Distance penalty:", "Penalti jarak:"},
-    {"Distance penalty", "Penalti jarak"},
-    {"RANKING WEIGHTS", "BOBOT PERINGKAT"},
-    {"Approach radius (server accepts 9):", "Radius pendekatan (server terima 9):"},
-    {"Approach radius (server accepts 9)", "Radius pendekatan (server terima 9)"},
-    {"Approach radius", "Radius pendekatan"},
-    {"server accepts 9", "server terima 9"},
-    {"Max time per trip:", "Waktu maks per perjalanan:"},
-    {"Max time per trip", "Waktu maks per perjalanan"},
-    {"Stop the farm on rollback", "Hentikan panen saat rollback"},
-    {"MOVEMENT AND SAFETY", "GERAK & KEAMANAN"},
-    {"Fast hop (chained CFrame steps)", "Lompat cepat (langkah CFrame berantai)"},
-    {"Instant TP (uses the ragdoll window)", "TP instan (pakai celah ragdoll)"},
-    {"Minimum distance for TP:", "Jarak minimum untuk TP:"},
-    {"Minimum distance for TP", "Jarak minimum untuk TP"},
-    {"Hop step (lower = safer):", "Langkah lompat (rendah = aman):"},
-    {"Hop step (lower = safer)", "Langkah lompat (rendah = aman)"},
-    {"Hop interval (higher = safer):", "Interval lompat (tinggi = aman):"},
-    {"Hop interval (higher = safer)", "Interval lompat (tinggi = aman)"},
-    {"Timestamp rewind per step:", "Putar balik waktu per langkah:"},
-    {"Timestamp rewind per step", "Putar balik waktu per langkah"},
-    {"FAST TRAVEL", "PERJALANAN CEPAT"},
-    {"The anti-cheat validates distance divided by time. The hop rewinds the timestamp of its samples before every step:", "Anti-cheat memvalidasi jarak dibagi waktu. Lompat memutar balik timestamp sampel sebelum setiap langkah:"},
-    {"The instant TP needs a ragdoll window opened by the SERVER. It uses a first-area egg as the ticket but does NOT consume it: the strike only DROPS that egg and it returns to its own slot, so the real cost is the ~0.5s to walk over and grab it, not an egg.", "TP instan memerlukan celah ragdoll dari SERVER. Ia memakai telur area pertama sebagai tiket tapi TIDAK menghabiskannya: serangan hanya MENJATUHKAN telur itu dan kembali ke slotnya, biaya sebenarnya hanya ~0.5s berjalan dan mengambilnya, bukan telur."},
-    {"One window = ONE leg of the trip. Measured: the server refuses to pick up any egg for the whole ragdoll (cannot carry eggs while knocked down) and the position exemption dies the instant the ragdoll ends - a TP written 51ms after EndRagdoll already gets relocated. So the TP covers the way OUT and the way back with the egg is always the chained hop.", "Satu celah = SATU perjalanan pergi. Server menolak mengambil telur saat ragdoll (tidak bisa bawa telur saat jatuh) dan pengecualian posisi hilang saat ragdoll berakhir - TP yang ditulis 51ms setelah EndRagdoll sudah dipindahkan. Jadi TP untuk pergi, dan kembali selalu pakai lompat CFrame."},
-    {"No metatable hook is used: __namecall got a kick in a direct test.", "Tidak pakai hook metatable: __namecall sudah ditendang saat tes langsung."},
-    {"Travel speed is step divided by interval. Default 80 / 0.08 = 1000", "Kecepatan = langkah dibagi interval. Standar 80 / 0.08 = 1000"},
-    {"GETTING ROLLBACK? Raise the rewind first as it inflates the distance the client-side detector allows per step and costs nothing. Only then lower the step, or raise the interval.", "ROLLBACK? Naikkan putar balik dulu karena itu memperbesar jarak yang diizinkan detektor client-side per langkah dan gratis. Baru turunkan langkah, atau naikkan interval."},
-    {"Every revert forces a retry, so a big step is slower in practice.", "Setiap rollback memaksa percobaan ulang, jadi langkah besar malah lebih lambat."},
-    {"Count pets you already own", "Hitung hewan yang sudah dimiliki"},
-    {"Plant recipe eggs on the plot", "Tanam telur resep di lahan"},
-    {"Plant index eggs on the plot", "Tanam telur indeks di lahan"},
-    {"The machine CONSUMES the 3 pets on trade-in. With the first option on, a pet you already have free in the inventory closes that slot and the hub will not hunt that animal - the bar shows the count (p = pet, o = egg, eq = placed). Turn it off to hunt all three from scratch and keep the pets you have.", "Mesin RIFT menghabiskan 3 hewan saat ditukar. Jika opsi pertama aktif, hewan yang sudah ada di inventaris akan menutup slot itu dan hub tidak akan memburu hewan itu - bar menunjukkan jumlah (p = hewan, o = telur, eq = ditanam). Matikan jika ingin memburu semua dari awal dan menyimpan hewan yang ada."},
-    {"Floating button (show/hide)", "Tombol mengambang (tampil/sembunyi)"},
-    {"Interface scale:", "Skala antarmuka:"},
-    {"Interface scale", "Skala antarmuka"},
-    {"Platform: mobile (touch, no keyboard). The scale starts automatic from the resolution (base window 620x420 shrunk to fit 92%x 88% of the screen). Touching the slider pins the", "Platform: mobile (sentuh, tanpa keyboard). Skala otomatis dari resolusi (jendela dasar 620x420 dikecilkan ke 92%x88% layar). Sentuh slider untuk mengunci"},
-    {"INTERFACE", "ANTARMUKA"},
-    {"RIFT", "CELAH"},
-    {"no mode: farming by $/s. RIFT hunts the machine recipe. INDEX hunts what your codex is missing", "mode dasar: panen berdasarkan $/s. RIFT: buru resep mesin. INDEX: buru telur yang hilang di codex"},
-    {"no mode: farming by $/s. RIFT hunts the machine. INDEX hunts what your codex is missing", "mode dasar: panen berdasarkan $/s. RIFT: buru mesin. INDEX: buru telur yang hilang di codex"},
-    {"hunts what your codex is missing", "buru yang hilang di codex"},
-    {"RIFT hunts the machine recipe", "RIFT buru resep mesin"},
-    {"RIFT hunts the machine", "RIFT buru mesin"},
-    {"no mode: farming by $/s.", "mode dasar: panen berdasarkan $/s."},
-    {"START FARM", "MULAI PANEN"},
-    {"STOP FARM", "BERHENTI PANEN"},
-    {"BEST TARGETS RIGHT NOW", "TARGET TERBAIK SAAT INI"},
-    {"CLEAR TARGET", "HAPUS TARGET"},
-    {"click to lock", "klik untuk kunci"},
-    {"locked", "terkunci"},
-    {"per second", "/detik"},
-    {"RIFT: OFF", "CELAH: MATI"},
-    {"RIFT: ON", "CELAH: NYALA"},
-    {"INDEX: OFF", "INDEKS: MATI"},
-    {"INDEX: ON", "INDEKS: NYALA"},
-    {"FARM", "PANEN"},
-    {"PETS", "HEWAN"},
-    {"CONFIG", "PENGATURAN"},
-    {"heading to Koi", "menuju Koi"},
-    {"heading to", "menuju"},
-    {"delivered", "terkirim"},
-    {"failed", "gagal"},
-    {"lost", "hilang"},
-    {"idle", "menganggur"},
-    {"studs", "meter"},
-    {"Burrowing Owl", "Burung Hantu Galian"},
-    {"Bladehide", "Kadal Berduri"},
-    {"Bronto", "Brontosaurus"},
-    {"Chicken", "Ayam"},
-    {"Dog", "Anjing"},
-    {"Rhinotaur", "Badak Minotaur"},
-    {"Mantaris", "Belalang Raksasa"},
-    {"Triceratops", "Triceratops"},
-    {"Whale Shark", "Hiu Paus"},
-    {"Beluga Whale", "Paus Beluga"},
-    {"Koi", "Ikan Koi"},
-    {"Common", "Umum"},
-    {"Rare", "Langka"},
-    {"Epic", "Epik"},
-    {"Legendary", "Legendaris"},
-    {"Mythic", "Mistik"},
-    {"Divine", "Dewa"},
-    {"Cosmic", "Kosmis"},
-    {"Secret", "Rahasia"},
-    {"Cherry Blossom", "Sakura"},
-    {"Forest", "Hutan"},
-    {"Desert", "Gurun"},
-    {"Titan Temple", "Kuil Titan"},
-    {"Abyss Ocean", "Samudra Jurang"},
-    {"Prehistoric", "Prasejarah"}
+    {"Fast mode (grab the closest)", "Chế độ nhanh (nhặt trứng gần nhất)"},
+    {"Selected pets only", "Chỉ nhặt thú cưng đã chọn"},
+    {"Mutated eggs only", "Chỉ nhặt trứng đột biến"},
+    {"Skip eggs with a player within [PvP]:", "Bỏ qua trứng có người gần [PvP]:"},
+    {"Skip eggs with a player within [PvP]", "Bỏ qua trứng có người gần [PvP]"},
+    {"Minimum rarity:", "Độ hiếm tối thiểu:"},
+    {"Minimum rarity", "Độ hiếm tối thiểu"},
+    {"Maximum target distance:", "Khoảng cách mục tiêu tối đa:"},
+    {"Maximum target distance", "Khoảng cách mục tiêu tối đa"},
+    {"TARGET FILTER", "BỘ LỌC MỤC TIÊU"},
+    {"On, the ranking is $/s by the game's own formula and the weights above are inert (distance only counts when the instant TP is unusable).", "Khi bật, mục tiêu xếp theo $/s theo công thức của game và các trọng số trên sẽ tắt (khoảng cách chỉ tính khi không thể dùng TP tức thì)."},
+    {"Rank by pure $/s", "Ưu tiên thuần theo $/giây"},
+    {"Rarity weight:", "Trọng số độ hiếm:"},
+    {"Rarity weight", "Trọng số độ hiếm"},
+    {"Mutation weight:", "Trọng số đột biến:"},
+    {"Mutation weight", "Trọng số đột biến"},
+    {"Size weight:", "Trọng số kích thước:"},
+    {"Size weight", "Trọng số kích thước"},
+    {"Distance penalty:", "Phạt khoảng cách:"},
+    {"Distance penalty", "Phạt khoảng cách"},
+    {"RANKING WEIGHTS", "TRỌNG SỐ ƯU TIÊN MỤC TIÊU"},
+    {"Approach radius (server accepts 9):", "Bán kính tiếp cận (server nhận 9):"},
+    {"Approach radius (server accepts 9)", "Bán kính tiếp cận (server nhận 9)"},
+    {"Approach radius", "Bán kính tiếp cận"},
+    {"server accepts 9", "server nhận 9"},
+    {"Max time per trip:", "Thời gian tối đa mỗi chuyến:"},
+    {"Max time per trip", "Thời gian tối đa mỗi chuyến"},
+    {"Stop the farm on rollback", "Dừng cày khi bị giật lùi (rollback)"},
+    {"MOVEMENT AND SAFETY", "DI CHUYỂN & AN TOÀN"},
+    {"Fast hop (chained CFrame steps)", "Nhảy nhanh (bước CFrame liên tục)"},
+    {"Instant TP (uses the ragdoll window)", "TP tức thì (dùng khe hở ragdoll)"},
+    {"Minimum distance for TP:", "Khoảng cách tối thiểu để TP:"},
+    {"Minimum distance for TP", "Khoảng cách tối thiểu để TP"},
+    {"Hop step (lower = safer):", "Độ dài bước nhảy (thấp = an toàn):"},
+    {"Hop step (lower = safer)", "Độ dài bước nhảy (thấp = an toàn)"},
+    {"Hop interval (higher = safer):", "Thời gian chờ mỗi bước (cao = an toàn):"},
+    {"Hop interval (higher = safer)", "Thời gian chờ mỗi bước (cao = an toàn)"},
+    {"Timestamp rewind per step:", "Tua ngược thời gian mỗi bước:"},
+    {"Timestamp rewind per step", "Tua ngược thời gian mỗi bước"},
+    {"FAST TRAVEL", "DI CHUYỂN NHANH (TELEPORT)"},
+    {"The anti-cheat validates distance divided by time. The hop rewinds the timestamp of its samples before every step:", "Chống hack kiểm tra khoảng cách chia cho thời gian. Bước nhảy tua lại mốc thời gian trước mỗi bước:"},
+    {"The instant TP needs a ragdoll window opened by the SERVER. It uses a first-area egg as the ticket but does NOT consume it: the strike only DROPS that egg and it returns to its own slot, so the real cost is the ~0.5s to walk over and grab it, not an egg.", "TP tức thì cần khe hở ragdoll do SERVER mở. Nó dùng trứng khu 1 làm vé nhưng KHÔNG mất: đòn đánh chỉ làm RƠI trứng về chỗ cũ, chi phí thực chỉ là ~0.5s đi lại nhặt, không mất trứng."},
+    {"One window = ONE leg of the trip. Measured: the server refuses to pick up any egg for the whole ragdoll (cannot carry eggs while knocked down) and the position exemption dies the instant the ragdoll ends - a TP written 51ms after EndRagdoll already gets relocated. So the TP covers the way OUT and the way back with the egg is always the chained hop.", "Một khe hở = 1 lượt đi. Server từ chối nhặt trứng khi đang ragdoll (không thể cầm trứng khi ngã) và quyền miễn trừ vị trí mất ngay khi hết ragdoll. TP dùng cho lượt ĐI, lượt VỀ luôn là nhảy CFrame."},
+    {"No metatable hook is used: __namecall got a kick in a direct test.", "Không dùng hook metatable: __namecall đã bị kick khi thử nghiệm."},
+    {"Travel speed is step divided by interval. Default 80 / 0.08 = 1000", "Tốc độ di chuyển = bước chia cho thời gian chờ. Mặc định 80 / 0.08 = 1000"},
+    {"GETTING ROLLBACK? Raise the rewind first as it inflates the distance the client-side detector allows per step and costs nothing. Only then lower the step, or raise the interval.", "BỊ GIẬT LÙI? Hãy tăng tua ngược thời gian trước vì nó mở rộng khoảng cách cho phép mỗi bước. Sau đó mới giảm bước hoặc tăng thời gian chờ."},
+    {"Every revert forces a retry, so a big step is slower in practice.", "Mỗi lần lùi phải thử lại nên bước lớn thực tế lại chậm hơn."},
+    {"Count pets you already own", "Tính cả thú cưng bạn đã có"},
+    {"Plant recipe eggs on the plot", "Đặt trứng công thức lên khu đất"},
+    {"Plant index eggs on the plot", "Đặt trứng sưu tập lên khu đất"},
+    {"The machine CONSUMES the 3 pets on trade-in. With the first option on, a pet you already have free in the inventory closes that slot and the hub will not hunt that animal - the bar shows the count (p = pet, o = egg, eq = placed). Turn it off to hunt all three from scratch and keep the pets you have.", "Máy RIFT sẽ TIÊU THỤ 3 thú cưng khi đổi. Bật tùy chọn đầu, thú cưng có sẵn trong túi sẽ lấp ô đó và hub không cần săn con đó nữa. Tắt đi nếu muốn săn mới cả 3 và giữ lại thú cưng đang có."},
+    {"Floating button (show/hide)", "Nút tròn nổi (hiện/ẩn)"},
+    {"Interface scale:", "Tỷ lệ giao diện:"},
+    {"Interface scale", "Tỷ lệ giao diện"},
+    {"Platform: mobile (touch, no keyboard). The scale starts automatic from the resolution (base window 620x420 shrunk to fit 92%x 88% of the screen). Touching the slider pins the", "Nền tảng: di động (cảm ứng, không phím). Tỷ lệ tự động theo độ phân giải màn hình (cửa sổ 620x420 thu gọn vừa 92%x 88% màn hình). Chạm thanh trượt để cố định"},
+    {"INTERFACE", "GIAO DIỆN"},
+    {"RIFT", "MÁY RIFT"},
+    {"no mode: farming by $/s. RIFT hunts the machine recipe. INDEX hunts what your codex is missing", "Cơ bản: cày theo $/s. RIFT: săn công thức máy. SƯU TẬP: săn trứng thiếu"},
+    {"no mode: farming by $/s. RIFT hunts the machine. INDEX hunts what your codex is missing", "Cơ bản: cày theo $/s. RIFT: săn máy. SƯU TẬP: săn trứng thiếu"},
+    {"hunts what your codex is missing", "săn trứng còn thiếu"},
+    {"RIFT hunts the machine recipe", "RIFT săn công thức máy"},
+    {"RIFT hunts the machine", "RIFT săn máy"},
+    {"no mode: farming by $/s.", "Cơ bản: cày theo $/s."},
+    {"START FARM", "BẮT ĐẦU CÀY"},
+    {"STOP FARM", "DỪNG CÀY"},
+    {"BEST TARGETS RIGHT NOW", "MỤC TIÊU TỐT NHẤT HIỆN TẠI"},
+    {"CLEAR TARGET", "HỦY MỤC TIÊU"},
+    {"click to lock", "bấm để khóa"},
+    {"locked", "đã khóa"},
+    {"per second", "/giây"},
+    {"RIFT: OFF", "RIFT: TẮT"},
+    {"RIFT: ON", "RIFT: BẬT"},
+    {"INDEX: OFF", "SƯU TẬP: TẮT"},
+    {"INDEX: ON", "SƯU TẬP: BẬT"},
+    {"FARM", "CÀY TIỀN"},
+    {"PETS", "THÚ CƯNG"},
+    {"CONFIG", "CẤU HÌNH"},
+    {"heading to Koi", "Đang tới Cá Koi"},
+    {"heading to", "Đang tới"},
+    {"delivered", "đã giao"},
+    {"failed", "thất bại"},
+    {"lost", "mất"},
+    {"idle", "đang chờ"},
+    {"studs", "mét"},
+    {"Burrowing Owl", "Cú Hang"},
+    {"Bladehide", "Thằn Lằn Gai"},
+    {"Bronto", "Khủng Long Cổ Dài"},
+    {"Chicken", "Gà"},
+    {"Dog", "Chó"},
+    {"Rhinotaur", "Tê Giác Quái"},
+    {"Mantaris", "Bọ Ngựa Quái"},
+    {"Triceratops", "Khủng Long 3 Sừng"},
+    {"Whale Shark", "Cá Mập Voi"},
+    {"Beluga Whale", "Cá Voi Trắng"},
+    {"Koi", "Cá Koi"},
+    {"Common", "Thường"},
+    {"Rare", "Hiếm"},
+    {"Epic", "Sử Thi"},
+    {"Legendary", "Huyền Thoại"},
+    {"Mythic", "Thần Thoại"},
+    {"Divine", "Thần Thánh"},
+    {"Cosmic", "Vũ Trụ"},
+    {"Secret", "Bí Mật"},
+    {"Cherry Blossom", "Hoa Anh Đào"},
+    {"Forest", "Rừng Rậm"},
+    {"Desert", "Sa Mạc"},
+    {"Titan Temple", "Đền Titan"},
+    {"Abyss Ocean", "Biển Vực Sâu"},
+    {"Prehistoric", "Tiền Sử"}
 }
 
 table.sort(RAW_TRANSLATIONS, function(a, b) return #a[1] > #b[1] end)
@@ -1017,342 +603,325 @@ local function translateText(raw)
     return res
 end
 
--- =====================================================================
--- ==================== 17. FITUR XENON (God Mode, Speed, Instant TP) ====================
--- =====================================================================
+-- ==================== 10. TẠO THANH GHIM DOCKED (310PX) ====================
+local isVietnamese = true
+local OriginalTexts = {}
+local targetOnhubWindow = nil
 
-local XenonGui = Instance.new("ScreenGui")
-XenonGui.Name = "VexxuzzZx_XenonPanel"
-XenonGui.ResetOnSpawn = false
-XenonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-XenonGui.DisplayOrder = 999998
-XenonGui.Parent = (gethui and gethui()) or CoreGuiService
-XenonGui.Enabled = false  -- default hidden
+local PinGui = Instance.new("ScreenGui")
+PinGui.Name = "Ronnei_ONhub_FailsafeMaster"
+PinGui.ResetOnSpawn = false
+PinGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+PinGui.DisplayOrder = 999999
+PinGui.Parent = (gethui and gethui()) or CoreGuiService
 
-local XenonFrame = Instance.new("Frame")
-XenonFrame.Name = "XenonFrame"
-XenonFrame.Size = UDim2.new(0, 280, 0, 280)
-XenonFrame.Position = UDim2.new(0.5, -140, 0.5, -140)
-XenonFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-XenonFrame.BackgroundTransparency = 0.4
-XenonFrame.BorderSizePixel = 0
-XenonFrame.ClipsDescendants = true
-XenonFrame.Parent = XenonGui
+local PinBar = Instance.new("Frame", PinGui)
+PinBar.Name = "RonneiCompactBar"
+PinBar.Size = UDim2.new(0, 310, 0, 28)
+PinBar.Position = UDim2.new(0, 0, 0, -100)
+PinBar.BackgroundColor3 = THEME.BarBG
+PinBar.BorderSizePixel = 0
+PinBar.Visible = false
 
-local XenonCorner = Instance.new("UICorner")
-XenonCorner.CornerRadius = UDim.new(0, 20)
-XenonCorner.Parent = XenonFrame
+Instance.new("UICorner", PinBar).CornerRadius = UDim.new(0, 6)
+local BarStroke = Instance.new("UIStroke", PinBar)
+BarStroke.Color = THEME.AccentMint
+BarStroke.Thickness = 1.2
 
-local XenonBlur = Instance.new("BlurEffect", XenonFrame)
-XenonBlur.Size = 10
-
-local XenonStroke = Instance.new("UIStroke", XenonFrame)
-XenonStroke.Color = Color3.fromRGB(124, 58, 237)
-XenonStroke.Thickness = 1.5
-XenonStroke.Transparency = 0.3
-
-local XenonBg = Instance.new("ImageLabel", XenonFrame)
-XenonBg.Size = UDim2.new(1, 0, 1, 0)
-XenonBg.BackgroundTransparency = 1
-XenonBg.Image = ANIME_BG_URL
-XenonBg.ScaleType = Enum.ScaleType.Crop
-XenonBg.ZIndex = 0
-
-local XenonTitle = Instance.new("TextLabel", XenonFrame)
-XenonTitle.Size = UDim2.new(1, -20, 0, 30)
-XenonTitle.Position = UDim2.new(0, 10, 0, 10)
-XenonTitle.BackgroundTransparency = 1
-XenonTitle.Font = THEME.FontB
-XenonTitle.Text = "⚡ Xenon Features"
-XenonTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-XenonTitle.TextSize = 18
-XenonTitle.TextScaled = true
-
--- Speed input
-local SpeedContainer = Instance.new("Frame", XenonFrame)
-SpeedContainer.Size = UDim2.new(0, 240, 0, 36)
-SpeedContainer.Position = UDim2.new(0.5, -120, 0, 50)
-SpeedContainer.BackgroundTransparency = 1
-
-local SpeedTextBox = Instance.new("TextBox", SpeedContainer)
-SpeedTextBox.Size = UDim2.new(0, 140, 0, 36)
-SpeedTextBox.Position = UDim2.new(0, 0, 0, 0)
-SpeedTextBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-SpeedTextBox.Font = THEME.FontB
-SpeedTextBox.PlaceholderText = "Bypass Speed"
-SpeedTextBox.Text = "300"
-SpeedTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SpeedTextBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-SpeedTextBox.TextSize = 14
-local SpeedCorner = Instance.new("UICorner", SpeedTextBox)
-SpeedCorner.CornerRadius = UDim.new(0, 12)
-
-local SubmitSpeedBtn = Instance.new("TextButton", SpeedContainer)
-SubmitSpeedBtn.Size = UDim2.new(0, 90, 0, 36)
-SubmitSpeedBtn.Position = UDim2.new(0, 150, 0, 0)
-SubmitSpeedBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-SubmitSpeedBtn.Font = THEME.FontB
-SubmitSpeedBtn.Text = "Set Speed"
-SubmitSpeedBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-SubmitSpeedBtn.TextSize = 13
-SubmitSpeedBtn.AutoButtonColor = false
-local SubCorner = Instance.new("UICorner", SubmitSpeedBtn)
-SubCorner.CornerRadius = UDim.new(0, 12)
-
--- Status label
-local XenonStatus = Instance.new("TextLabel", XenonFrame)
-XenonStatus.Size = UDim2.new(1, -20, 0, 20)
-XenonStatus.Position = UDim2.new(0, 10, 0, 96)
-XenonStatus.BackgroundTransparency = 1
-XenonStatus.Font = THEME.FontB
-XenonStatus.Text = "Speed: 300"
-XenonStatus.TextColor3 = Color3.fromRGB(180, 180, 180)
-XenonStatus.TextSize = 12
-
--- Instant TP Button
-local InstantTPBtn = Instance.new("TextButton", XenonFrame)
-InstantTPBtn.Size = UDim2.new(0, 240, 0, 36)
-InstantTPBtn.Position = UDim2.new(0.5, -120, 0, 130)
-InstantTPBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-InstantTPBtn.Font = THEME.FontB
-InstantTPBtn.Text = "Instant TP to Safe Zone"
-InstantTPBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-InstantTPBtn.TextSize = 14
-InstantTPBtn.AutoButtonColor = false
-local InstCorner = Instance.new("UICorner", InstantTPBtn)
-InstCorner.CornerRadius = UDim.new(0, 20)
-
--- God Mode Toggle
-local GodModeBtn = Instance.new("TextButton", XenonFrame)
-GodModeBtn.Size = UDim2.new(0, 240, 0, 36)
-GodModeBtn.Position = UDim2.new(0.5, -120, 0, 176)
-GodModeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-GodModeBtn.Font = THEME.FontB
-GodModeBtn.Text = "God Mode: OFF"
-GodModeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-GodModeBtn.TextSize = 14
-GodModeBtn.AutoButtonColor = false
-local GodCorner = Instance.new("UICorner", GodModeBtn)
-GodCorner.CornerRadius = UDim.new(0, 20)
-
--- Instant Return Toggle
-local InstantReturnBtn = Instance.new("TextButton", XenonFrame)
-InstantReturnBtn.Size = UDim2.new(0, 240, 0, 36)
-InstantReturnBtn.Position = UDim2.new(0.5, -120, 0, 222)
-InstantReturnBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-InstantReturnBtn.Font = THEME.FontB
-InstantReturnBtn.Text = "Instant Return: OFF"
-InstantReturnBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-InstantReturnBtn.TextSize = 14
-InstantReturnBtn.AutoButtonColor = false
-local RetCorner = Instance.new("UICorner", InstantReturnBtn)
-RetCorner.CornerRadius = UDim.new(0, 20)
-
--- Dragging for Xenon panel
-local dragX, dragXStart, dragXStartPos = false, nil, nil
-XenonFrame.InputBegan:Connect(function(input)
+local dragging, dragStart, startWinPos = false, nil, nil
+PinBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragX = true
-        dragXStart = input.Position
-        dragXStartPos = XenonFrame.Position
+        if targetOnhubWindow and targetOnhubWindow.Parent then
+            dragging = true
+            dragStart = input.Position
+            startWinPos = targetOnhubWindow.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if dragX and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragXStart
-        XenonFrame.Position = UDim2.new(dragXStartPos.X.Scale, dragXStartPos.X.Offset + delta.X, dragXStartPos.Y.Scale, dragXStartPos.Y.Offset + delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragX = false
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if targetOnhubWindow and targetOnhubWindow.Parent then
+            local delta = input.Position - dragStart
+            targetOnhubWindow.Position = UDim2.new(startWinPos.X.Scale, startWinPos.X.Offset + delta.X, startWinPos.Y.Scale, startWinPos.Y.Offset + delta.Y)
+        end
     end
 end)
 
--- ==================== LOGIKA FITUR XENON ====================
+local TikTokBadge = Instance.new("Frame", PinBar)
+TikTokBadge.Size = UDim2.new(0, 135, 0, 20)
+TikTokBadge.Position = UDim2.new(0, 4, 0.5, 0)
+TikTokBadge.AnchorPoint = Vector2.new(0, 0.5)
+TikTokBadge.BackgroundColor3 = THEME.CardBG
+Instance.new("UICorner", TikTokBadge).CornerRadius = UDim.new(1, 0)
 
-local moveSpeed = 300
-local godModeEnabled = false
-local instantReturnEnabled = false
-local xenonPanelVisible = false
+local BadgeStroke = Instance.new("UIStroke", TikTokBadge)
+BadgeStroke.Color = THEME.AccentMint
+BadgeStroke.Thickness = 1.2
 
--- Fungsi mencari safe zone
-local function findSafeZone()
-    local strict = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Map") and workspace.Game.Map:FindFirstChild("Lobby") and workspace.Game.Map.Lobby:FindFirstChild("Floor") and workspace.Game.Map.Lobby.Floor:FindFirstChild("safe")
-    if strict then return strict end
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj.Name == "safe" and obj:IsA("BasePart") then
-            return obj
-        end
-    end
-    return nil
-end
+local BadgeGrad = Instance.new("UIGradient", BadgeStroke)
+BadgeGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 230, 120)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 230, 120))
+})
 
--- Instant TP ke safe zone
-local function instantTeleportToSafe()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum then return end
-    local safe = findSafeZone()
-    if not safe then
-        XenonStatus.Text = "Error: Safe zone not found!"
-        XenonStatus.TextColor3 = Color3.fromRGB(255, 80, 80)
-        return
-    end
-    local targetPos = safe.Position + Vector3.new(0, 3, 0)
-    hrp.CFrame = CFrame.new(targetPos)
-    hrp.Velocity = Vector3.new(0, 0, 0)
-    hum:ChangeState(Enum.HumanoidStateType.Running)
-    XenonStatus.Text = "Instant TP done!"
-    XenonStatus.TextColor3 = Color3.fromRGB(100, 255, 100)
-end
+local TikTokText = Instance.new("TextLabel", TikTokBadge)
+TikTokText.Size = UDim2.new(1, 0, 1, 0)
+TikTokText.BackgroundTransparency = 1
+TikTokText.Text = "TikTok: ronnei7.htk"
+TikTokText.Font = THEME.FontB
+TikTokText.TextSize = 10
+TikTokText.TextColor3 = THEME.TextMain
 
--- Set speed
-SubmitSpeedBtn.MouseButton1Click:Connect(function()
-    local num = tonumber(SpeedTextBox.Text)
-    if num and num > 0 then
-        moveSpeed = num
-        local char = LocalPlayer.Character
-        if char then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.WalkSpeed = moveSpeed
-            end
-        end
-        XenonStatus.Text = "Speed: " .. moveSpeed
-    end
-end)
-
--- God Mode
-local function applyGodMode(char)
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return end
-    if char._godModeConns then
-        for _, conn in pairs(char._godModeConns) do conn:Disconnect() end
-        char._godModeConns = nil
-    end
-    hum.BreakJointsOnDeath = false
-    hum.MaxHealth = 1e9
-    hum.Health = hum.MaxHealth
-
-    local healthConn = hum:GetPropertyChangedSignal("Health"):Connect(function()
-        if godModeEnabled and hum and hum.Parent then
-            if hum.Health <= 0 then hum.Health = hum.MaxHealth
-            elseif hum.Health < hum.MaxHealth then hum.Health = hum.MaxHealth end
-        end
-    end)
-    local diedConn = hum.Died:Connect(function()
-        if godModeEnabled and hum and hum.Parent then
-            task.wait(0.1)
-            hum.Health = hum.MaxHealth
-            hum:ChangeState(Enum.HumanoidStateType.Running)
-        end
-    end)
-    char._godModeConns = {healthConn, diedConn}
-end
-
-local function toggleGodMode()
-    godModeEnabled = not godModeEnabled
-    GodModeBtn.Text = godModeEnabled and "God Mode: ON" or "God Mode: OFF"
-    GodModeBtn.BackgroundColor3 = godModeEnabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 255, 255)
-    GodModeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    local char = LocalPlayer.Character
-    if char then
-        if godModeEnabled then
-            applyGodMode(char)
-        else
-            if char._godModeConns then
-                for _, conn in pairs(char._godModeConns) do conn:Disconnect() end
-                char._godModeConns = nil
-            end
-        end
-    end
-end
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if godModeEnabled then
-        task.wait(0.5)
-        applyGodMode(char)
-    end
-    -- terapkan speed jika sudah diset
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.WalkSpeed = moveSpeed
-    end
-end)
-
-GodModeBtn.MouseButton1Click:Connect(toggleGodMode)
-
--- Instant Return Toggle (mengganti mekanisme kembali ke safe zone menjadi instant)
-local function toggleInstantReturn()
-    instantReturnEnabled = not instantReturnEnabled
-    InstantReturnBtn.Text = instantReturnEnabled and "Instant Return: ON" or "Instant Return: OFF"
-    InstantReturnBtn.BackgroundColor3 = instantReturnEnabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 255, 255)
-    InstantReturnBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-end
-InstantReturnBtn.MouseButton1Click:Connect(toggleInstantReturn)
-
--- Loop pemantauan instant return
 task.spawn(function()
-    while true do
-        pcall(function()
-            if instantReturnEnabled then
-                local char = LocalPlayer.Character
-                if char then
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        local safe = findSafeZone()
-                        if safe then
-                            local dist = (safe.Position - hrp.Position).Magnitude
-                            if dist < 150 and dist > 2 then
-                                -- Cek apakah pemain bergerak mendekati safe zone
-                                local vel = hrp.Velocity
-                                local dirToSafe = (safe.Position - hrp.Position).Unit
-                                local movingToward = vel:Dot(dirToSafe) > 0.5
-                                if movingToward then
-                                    -- Teleport instant
-                                    hrp.CFrame = CFrame.new(safe.Position + Vector3.new(0, 3, 0))
-                                    hrp.Velocity = Vector3.new(0, 0, 0)
-                                    local hum = char:FindFirstChildOfClass("Humanoid")
-                                    if hum then hum:ChangeState(Enum.HumanoidStateType.Running) end
-                                end
+    local rot = 0
+    while TikTokBadge.Parent do
+        rot = (rot + 3) % 360
+        BadgeGrad.Rotation = rot
+        task.wait(0.04)
+    end
+end)
+
+local ControlBox = Instance.new("Frame", PinBar)
+ControlBox.Size = UDim2.new(0, 160, 0, 22)
+ControlBox.Position = UDim2.new(1, -4, 0.5, 0)
+ControlBox.AnchorPoint = Vector2.new(1, 0.5)
+ControlBox.BackgroundColor3 = THEME.CardBG
+Instance.new("UICorner", ControlBox).CornerRadius = UDim.new(0, 6)
+
+local BoxStroke = Instance.new("UIStroke", ControlBox)
+BoxStroke.Color = THEME.Border
+BoxStroke.Thickness = 1
+
+local StatusLabel = Instance.new("TextLabel", ControlBox)
+StatusLabel.Size = UDim2.new(1, -40, 1, 0)
+StatusLabel.Position = UDim2.new(0, 6, 0, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Tiếng Việt (ON)"
+StatusLabel.Font = THEME.FontB
+StatusLabel.TextSize = 10
+StatusLabel.TextColor3 = THEME.AccentMint
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local SwitchBtn = Instance.new("TextButton", ControlBox)
+SwitchBtn.Size = UDim2.new(0, 30, 0, 14)
+SwitchBtn.Position = UDim2.new(1, -34, 0.5, 0)
+SwitchBtn.AnchorPoint = Vector2.new(0, 0.5)
+SwitchBtn.BackgroundColor3 = THEME.AccentMint
+SwitchBtn.Text = ""
+SwitchBtn.AutoButtonColor = false
+Instance.new("UICorner", SwitchBtn).CornerRadius = UDim.new(1, 0)
+
+local Knob = Instance.new("Frame", SwitchBtn)
+Knob.Size = UDim2.new(0, 10, 0, 10)
+Knob.Position = UDim2.new(1, -12, 0.5, 0)
+Knob.AnchorPoint = Vector2.new(0, 0.5)
+Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Knob.BorderSizePixel = 0
+Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+local function updateLanguage(state)
+    isVietnamese = state
+    if isVietnamese then
+        StatusLabel.Text = "Tiếng Việt (ON)"
+        StatusLabel.TextColor3 = THEME.AccentMint
+        TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.AccentMint}):Play()
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -12, 0.5, 0)}):Play()
+    else
+        StatusLabel.Text = "English (OFF)"
+        StatusLabel.TextColor3 = THEME.TextSub
+        TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.ToggleOff}):Play()
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, 0)}):Play()
+    end
+end
+
+SwitchBtn.MouseButton1Click:Connect(function() updateLanguage(not isVietnamese) end)
+ControlBox.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        updateLanguage(not isVietnamese)
+    end
+end)
+
+-- ==================== 11. BỘ DỊCH TỨC THỜI (CÁCH LY AN TOÀN TUYỆT ĐỐI) ====================
+local translatingSet = {}
+
+local function applyElemTranslation(elem)
+    if translatingSet[elem] then return end
+    if not (elem:IsA("TextLabel") or elem:IsA("TextButton")) then return end
+    if elem:IsDescendantOf(PinGui) then return end
+
+    local cur = elem.Text
+    if not cur or cur == "" then return end
+
+    local lastApplied = elem:GetAttribute("Ronnei_LastApplied")
+    if cur ~= lastApplied then
+        OriginalTexts[elem] = cur
+    end
+
+    local orig = OriginalTexts[elem] or cur
+
+    if isVietnamese then
+        local vi = translateText(orig)
+        if elem.Text ~= vi then
+            translatingSet[elem] = true
+            pcall(function()
+                elem:SetAttribute("Ronnei_LastApplied", vi)
+                elem.Text = vi
+            end)
+            translatingSet[elem] = nil
+        end
+    else
+        if elem.Text ~= orig then
+            translatingSet[elem] = true
+            pcall(function()
+                elem:SetAttribute("Ronnei_LastApplied", nil)
+                elem.Text = orig
+            end)
+            translatingSet[elem] = nil
+        end
+    end
+end
+
+local function hookElement(elem)
+    if (elem:IsA("TextLabel") or elem:IsA("TextButton")) and not elem:IsDescendantOf(PinGui) then
+        pcall(applyElemTranslation, elem)
+        if not elem:GetAttribute("Ronnei_Hooked") then
+            elem:SetAttribute("Ronnei_Hooked", true)
+            elem:GetPropertyChangedSignal("Text"):Connect(function()
+                pcall(applyElemTranslation, elem)
+            end)
+        end
+    end
+end
+
+-- ==================== 12. BỘ TÌM KIẾM CỬA SỔ ONHUB ====================
+local IDENTIFIERS = {
+    "FARM", "CÀY TIỀN",
+    "PETS", "THÚ CƯNG",
+    "CONFIG", "CẤU HÌNH",
+    "START FARM", "BẮT ĐẦU CÀY",
+    "TARGET FILTER", "BỘ LỌC MỤC TIÊU"
+}
+
+local function isDiscordWindow(win)
+    for _, d in ipairs(win:GetDescendants()) do
+        if (d:IsA("TextLabel") or d:IsA("TextButton")) and (d.Text:find("CONTINUE TO HUB", 1, true) or d.Text:find("JOIN OUR DISCORD", 1, true)) then
+            return true
+        end
+    end
+    return false
+end
+
+local function findOnhubWindow()
+    local function scanRoot(root)
+        if not root then return nil end
+        local ok, descs = pcall(function() return root:GetDescendants() end)
+        if not ok or not descs then return nil end
+        for _, obj in ipairs(descs) do
+            if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and not obj:IsDescendantOf(PinGui) then
+                local t = obj.Text
+                if t and #t > 0 then
+                    for _, id in ipairs(IDENTIFIERS) do
+                        if t == id or t:find(id, 1, true) then
+                            local p = obj
+                            while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= root do
+                                p = p.Parent
+                            end
+                            if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
+                                if not isDiscordWindow(p) then return p end
                             end
                         end
                     end
                 end
             end
-        end)
-        task.wait(0.15)
+        end
+        return nil
     end
-end)
 
--- Button to toggle Xenon panel visibility
-XenonToggleBtn.MouseButton1Click:Connect(function()
-    xenonPanelVisible = not xenonPanelVisible
-    XenonGui.Enabled = xenonPanelVisible
-end)
-
--- Instant TP button
-InstantTPBtn.MouseButton1Click:Connect(instantTeleportToSafe)
-
--- Set default speed on character spawn (also apply when speed is set manually)
-LocalPlayer.CharacterAdded:Connect(function(char)
-    task.wait(0.5)
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.WalkSpeed = moveSpeed
+    local found = nil
+    if gethui then found = scanRoot(gethui()) end
+    if not found then found = scanRoot(CoreGuiService) end
+    if not found and LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then found = scanRoot(LocalPlayer.PlayerGui) end
+    if not found and getinstances then
+        for _, ins in ipairs(getinstances()) do
+            if (ins:IsA("TextLabel") or ins:IsA("TextButton")) and not ins:IsDescendantOf(PinGui) then
+                local t = ins.Text
+                if t == "CONFIG" or t == "CẤU HÌNH" or t == "FARM" or t == "CÀY TIỀN" or t == "START FARM" then
+                    local p = ins
+                    while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= game do
+                        p = p.Parent
+                    end
+                    if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
+                        if not isDiscordWindow(p) then return p end
+                    end
+                end
+            end
+        end
     end
-end)
-
--- Terapkan speed awal jika karakter sudah ada
-task.wait(1)
-local char = LocalPlayer.Character
-if char then
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum then hum.WalkSpeed = moveSpeed end
+    return found
 end
 
--- ==================== AKHIR SCRIPT ====================
+-- ==================== 13. ĐỒNG BỘ HIỂN THỊ TỰ ĐỘNG ====================
+RunService.RenderStepped:Connect(function()
+    if targetOnhubWindow and targetOnhubWindow.Parent then
+        local winSize = targetOnhubWindow.AbsoluteSize
+        local winPos = targetOnhubWindow.AbsolutePosition
+
+        local isShowing = targetOnhubWindow.Visible and winSize.Y > 100 and winPos.Y > -100 and winPos.Y < 2000
+
+        if isShowing then
+            PinBar.Visible = true
+            PinBar.Position = UDim2.new(0, winPos.X + 4, 0, winPos.Y + 3)
+            PinBar.Size = UDim2.new(0, 310, 0, 28)
+        else
+            PinBar.Visible = false
+        end
+    else
+        PinBar.Visible = false
+    end
+end)
+
+-- ==================== 14. VÒNG LẶP DỊCH RIÊNG BIỆT (KHÔNG BAO GIỜ BỊ CRASH) ====================
+task.spawn(function()
+    while true do
+        pcall(function()
+            if not targetOnhubWindow or not targetOnhubWindow.Parent then
+                targetOnhubWindow = findOnhubWindow()
+            end
+
+            if targetOnhubWindow then
+                local rootScreen = targetOnhubWindow:FindFirstAncestorOfClass("ScreenGui")
+                local targetContainer = rootScreen or targetOnhubWindow
+
+                for _, elem in ipairs(targetContainer:GetDescendants()) do
+                    hookElement(elem)
+                end
+            end
+        end)
+        task.wait(0.25)
+    end
+end)
+
+-- ==================== 15. VÒNG LẶP ÁP DỤNG THÔNG SỐ SLIDERS (ĐỘC LẬP) ====================
+task.spawn(function()
+    while true do
+        pcall(function()
+            -- Ép bộ nhớ bot chạy 1200 và 60
+            if not presetMemoryDone then
+                applyMemoryPresets()
+            end
+
+            -- Ép giao diện khi cửa sổ được mở
+            if targetOnhubWindow and not presetUIDone then
+                applyUISliderPresets(targetOnhubWindow)
+            end
+        end)
+        if presetMemoryDone and presetUIDone then
+            break -- Đã cài đặt xong hoàn toàn, tự giải phóng vòng lặp
+        end
+        task.wait(0.5)
+    end
+end)
