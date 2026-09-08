@@ -635,8 +635,8 @@ end)
 local RAW_TRANSLATIONS = {
     {"Fast mode (grab the closest)", "Chế độ nhanh (nhặt trứng gần nhất)"},
     {"Selected pets only", "Chỉ nhặt thú cưng đã chọn"},
-    {"Mutated eggs only", "Chỉ nhặt trứng đột biến"},
-    {"Skip eggs with a player within [PvP]:", "Bỏ qua trứng có người gần [PvP]:"},
+    {"Mutated eggs only", "Hanya telur mutasi"},
+    {"Skip eggs with a player within [PvP]:", "Lewati telur jika ada pemain dalam [PvP]:"},
     {"Skip eggs with a player within [PvP]", "Bỏ qua trứng có người gần [PvP]"},
     {"Minimum rarity:", "Độ hiếm tối thiểu:"},
     {"Minimum rarity", "Độ hiếm tối thiểu"},
@@ -672,7 +672,7 @@ local RAW_TRANSLATIONS = {
     {"Hop interval (higher = safer)", "Thời gian chờ mỗi bước (cao = an toàn)"},
     {"Timestamp rewind per step:", "Tua ngược thời gian mỗi bước:"},
     {"Timestamp rewind per step", "Tua ngược thời gian mỗi bước"},
-    {"FAST TRAVEL", "DI CHUYỂN NHANH (TELEPORT)"},
+    {"FAST TRAVEL", "PERJALANAN CEPAT"},
     {"The anti-cheat validates distance divided by time. The hop rewinds the timestamp of its samples before every step:", "Chống hack kiểm tra khoảng cách chia cho thời gian. Bước nhảy tua lại mốc thời gian trước mỗi bước:"},
     {"The instant TP needs a ragdoll window opened by the SERVER. It uses a first-area egg as the ticket but does NOT consume it: the strike only DROPS that egg and it returns to its own slot, so the real cost is the ~0.5s to walk over and grab it, not an egg.", "TP tức thì cần khe hở ragdoll do SERVER mở. Nó dùng trứng khu 1 làm vé nhưng KHÔNG mất: đòn đánh chỉ làm RƠI trứng về chỗ cũ, chi phí thực chỉ là ~0.5s đi lại nhặt, không mất trứng."},
     {"One window = ONE leg of the trip. Measured: the server refuses to pick up any egg for the whole ragdoll (cannot carry eggs while knocked down) and the position exemption dies the instant the ragdoll ends - a TP written 51ms after EndRagdoll already gets relocated. So the TP covers the way OUT and the way back with the egg is always the chained hop.", "Một khe hở = 1 lượt đi. Server từ chối nhặt trứng khi đang ragdoll (không thể cầm trứng khi ngã) và quyền miễn trừ vị trí mất ngay khi hết ragdoll. TP dùng cho lượt ĐI, lượt VỀ luôn là nhảy CFrame."},
@@ -707,7 +707,7 @@ local RAW_TRANSLATIONS = {
     {"RIFT: ON", "RIFT: BẬT"},
     {"INDEX: OFF", "SƯU TẬP: TẮT"},
     {"INDEX: ON", "SƯU TẬP: BẬT"},
-    {"FARM", "CÀY TIỀN"},
+    {"FARM", "PANEN"},
     {"PETS", "THÚ CƯNG"},
     {"CONFIG", "CẤU HÌNH"},
     {"heading to Koi", "Đang tới Cá Koi"},
@@ -771,7 +771,7 @@ local function translateText(raw)
 end
 
 -- ==================== 10. THANH GHIM DOCKED (310PX) ====================
-local isVietnamese = false
+local isVietnamese = false -- locked to Bahasa Indonesia
 local OriginalTexts = {}
 local targetOnhubWindow = nil
 local isApplyingTranslation = false
@@ -899,10 +899,10 @@ local function updateLanguage(state)
     end
 end
 
-SwitchBtn.MouseButton1Click:Connect(function() updateLanguage(not isVietnamese) end)
+SwitchBtn.MouseButton1Click:Connect(function() updateLanguage(false) end)
 ControlBox.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        updateLanguage(not isVietnamese)
+        updateLanguage(false)
     end
 end)
 
@@ -954,7 +954,7 @@ end
 
 -- ==================== 12. BỘ TÌM KIẾM CỬA SỔ ONHUB ====================
 local IDENTIFIERS = {
-    "FARM", "CÀY TIỀN",
+    "FARM", "PANEN",
     "PETS", "THÚ CƯNG",
     "CONFIG", "CẤU HÌNH",
     "START FARM", "BẮT ĐẦU CÀY",
