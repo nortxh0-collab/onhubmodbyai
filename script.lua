@@ -1,6 +1,28 @@
 -- ==============================================================================
---  RONNEI HUB - ONHUB MASTER (PRESET 1200m/60m + FAILSAFE TRANSLATOR)
---  Mặc định: TP 1200m | Hop 60m | Luồng dịch cách ly 100% | Giữ nguyên bảng Pet
+-- BAYUAJELAH UI THEME PATCH (FIXED - FINAL)
+-- UI-only: blue glassmorphism + optional local JPG background.
+-- Put bayu_background.jpg beside the script when using an executor that supports
+-- getcustomasset/getsynasset. No gameplay logic is changed by this patch.
+-- ==============================================================================
+
+local BAYU_BACKGROUND_FILE = "bayu_background.jpg"
+
+local function bayuGetBackgroundAsset()
+    local ok, asset = pcall(function()
+        if getcustomasset then
+            return getcustomasset(BAYU_BACKGROUND_FILE)
+        elseif getsynasset then
+            return getsynasset(BAYU_BACKGROUND_FILE)
+        end
+    end)
+    if ok and asset and asset ~= "" then
+        return asset
+    end
+    return nil
+end
+
+-- ==============================================================================
+--  GLOBAL VARIABLES
 -- ==============================================================================
 
 local TweenService = game:GetService("TweenService")
@@ -14,7 +36,573 @@ local Terrain = Workspace:FindFirstChildOfClass("Terrain")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- ==================== 1. NẠP MẶC ĐỊNH 2 THANH TRƯỢT (BỘ NHỚ + GIAO DIỆN) ====================
+-- ==============================================================================
+--  PAGE MANAGER (DETEKSI HALAMAN & CONTAINER)
+-- ==============================================================================
+
+local currentPage = "UNKNOWN"
+local currentContainer = nil
+local pageContainers = {}  -- cache per halaman
+
+-- Fungsi untuk mencari window utama (onhub)
+local function findOnhubWindow()
+    local function scanRoot(root)
+        if not root then return nil end
+        local ok, descs = pcall(function() return root:GetDescendants() end)
+        if not ok or not descs then return nil end
+        for _, obj in ipairs(descs) do
+            if (obj:IsA("TextLabel") or obj:IsA("TextButton")) then
+                local t = obj.Text
+                if t and #t > 0 then
+                    local identifiers = {"FARM", "FARMING", "PETS", "HEWAN", "CONFIG", "KONFIGURASI", "START FARM", "MULAI FARMING", "EGG", "TELUR", "BẮT ĐẦU", "THÚ CƯNG", "CẤU HÌNH"}
+                    for _, id in ipairs(identifiers) do
+                        if t == id or t:find(id, 1, true) then
+                            local p = obj
+                            while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= root do
+                                p = p.Parent
+                            end
+                            if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
+                                -- cek apakah ini window discord?
+                                local isDiscord = false
+                                for _, d in ipairs(p:GetDescendants()) do
+                                    if (d:IsA("TextLabel") or d:IsA("TextButton")) and (d.Text:find("CONTINUE TO HUB", 1, true) or d.Text:find("JOIN OUR DISCORD", 1, true)) then
+                                        isDiscord = true
+                                        break
+                                    end
+                                end
+                                if not isDiscord then return p end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    local found = nil
+    if gethui then found = scanRoot(gethui()) end
+    if not found then found = scanRoot(CoreGuiService) end
+    if not found and LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then found = scanRoot(LocalPlayer.PlayerGui) end
+    if not found and getinstances then
+        for _, ins in ipairs(getinstances()) do
+            if (ins:IsA("TextLabel") or ins:IsA("TextButton")) then
+                local t = ins.Text
+                if t == "CONFIG" or t == "KONFIGURASI" or t == "FARM" or t == "FARMING" or t == "START FARM" or t == "EGG" or t == "TELUR" or t == "BẮT ĐẦU" or t == "THÚ CƯNG" or t == "CẤU HÌNH" then
+                    local p = ins
+                    while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= game do
+                        p = p.Parent
+                    end
+                    if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
+                        return p
+                    end
+                end
+            end
+        end
+    end
+    return found
+end
+
+-- Fungsi untuk mendapatkan container halaman dari window utama
+local function getPageContainer(window, pageName)
+    if not window then return nil end
+    -- Coba cari container berdasarkan tab aktif
+    local function findContainerByTab(page)
+        -- Cari semua tombol/label yang merupakan tab
+        local tabs = {}
+        for _, child in ipairs(window:GetDescendants()) do
+            if child:IsA("TextButton") or child:IsA("TextLabel") then
+                local txt = child.Text
+                if txt then
+                    local p = nil
+                    if txt:find("EGG", 1, true) or txt:find("TELUR", 1, true) or txt:find("TRỨNG", 1, true) then p = "EGG"
+                    elseif txt:find("FARM", 1, true) or txt:find("FARMING", 1, true) or txt:find("BẮT ĐẦU", 1, true) or txt:find("MULAI", 1, true) then p = "FARM"
+                    elseif txt:find("PETS", 1, true) or txt:find("HEWAN", 1, true) or txt:find("THÚ CƯNG", 1, true) then p = "PETS"
+                    elseif txt:find("CONFIG", 1, true) or txt:find("KONFIGURASI", 1, true) or txt:find("CẤU HÌNH", 1, true) or txt:find("CÀI ĐẶT", 1, true) then p = "CONFIG"
+                    end
+                    if p then
+                        table.insert(tabs, {obj = child, page = p})
+                    end
+                end
+            end
+        end
+
+        -- Cari tab yang aktif (misal background lebih terang atau ada border/indicator)
+        for _, tab in ipairs(tabs) do
+            if tab.page == page then
+                local obj = tab.obj
+                -- Cek apakah tab ini aktif: bisa berdasarkan BackgroundColor3 yang lebih terang, atau adanya frame kecil di bawah
+                local isActive = false
+                if obj:IsA("TextButton") then
+                    -- jika background color lebih terang dari rata-rata
+                    if obj.BackgroundColor3 and obj.BackgroundColor3.r > 0.5 then
+                        isActive = true
+                    end
+                    -- cari indicator (garis bawah)
+                    for _, child in ipairs(obj.Parent:GetChildren()) do
+                        if child:IsA("Frame") and child.Position.Y.Scale > 0.8 and child.Size.Y.Scale < 0.05 then
+                            isActive = true
+                            break
+                        end
+                    end
+                end
+                if isActive then
+                    -- Cari container konten yang berada di bawah tab (biasanya sibling atau anak dari parent)
+                    local parent = obj.Parent
+                    if parent then
+                        -- Cari frame terbesar yang bukan tab
+                        for _, frame in ipairs(parent:GetChildren()) do
+                            if frame:IsA("Frame") and frame ~= obj and frame.AbsoluteSize.X > 200 and frame.AbsoluteSize.Y > 100 then
+                                -- Periksa apakah frame berisi teks yang sesuai dengan halaman
+                                local hasPageText = false
+                                for _, desc in ipairs(frame:GetDescendants()) do
+                                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                                        local t = desc.Text
+                                        if t then
+                                            if page == "EGG" and (t:find("EGG", 1, true) or t:find("TELUR", 1, true) or t:find("TRỨNG", 1, true)) then hasPageText = true end
+                                            if page == "FARM" and (t:find("FARM", 1, true) or t:find("FARMING", 1, true) or t:find("BẮT ĐẦU", 1, true) or t:find("MULAI", 1, true)) then hasPageText = true end
+                                            if page == "PETS" and (t:find("PETS", 1, true) or t:find("HEWAN", 1, true) or t:find("THÚ CƯNG", 1, true)) then hasPageText = true end
+                                            if page == "CONFIG" and (t:find("CONFIG", 1, true) or t:find("KONFIGURASI", 1, true) or t:find("CẤU HÌNH", 1, true) or t:find("CÀI ĐẶT", 1, true)) then hasPageText = true end
+                                        end
+                                    end
+                                end
+                                if hasPageText then
+                                    return frame
+                                end
+                            end
+                        end
+                        -- Jika tidak ketemu, cari frame di seluruh window yang memiliki teks dominan
+                        for _, frame in ipairs(window:GetDescendants()) do
+                            if frame:IsA("Frame") and frame.Visible and frame.AbsoluteSize.X > 200 and frame.AbsoluteSize.Y > 100 then
+                                local hasText = false
+                                for _, desc in ipairs(frame:GetDescendants()) do
+                                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                                        local t = desc.Text
+                                        if t then
+                                            if page == "EGG" and (t:find("EGG", 1, true) or t:find("TELUR", 1, true) or t:find("TRỨNG", 1, true)) then hasText = true end
+                                            if page == "FARM" and (t:find("FARM", 1, true) or t:find("FARMING", 1, true) or t:find("BẮT ĐẦU", 1, true) or t:find("MULAI", 1, true)) then hasText = true end
+                                            if page == "PETS" and (t:find("PETS", 1, true) or t:find("HEWAN", 1, true) or t:find("THÚ CƯNG", 1, true)) then hasText = true end
+                                            if page == "CONFIG" and (t:find("CONFIG", 1, true) or t:find("KONFIGURASI", 1, true) or t:find("CẤU HÌNH", 1, true) or t:find("CÀI ĐẶT", 1, true)) then hasText = true end
+                                        end
+                                    end
+                                end
+                                if hasText then
+                                    return frame
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Fallback: cari container berdasarkan teks dominan (tanpa tab aktif)
+        for _, frame in ipairs(window:GetDescendants()) do
+            if frame:IsA("Frame") and frame.Visible and frame.AbsoluteSize.X > 200 and frame.AbsoluteSize.Y > 100 then
+                local hasText = false
+                for _, desc in ipairs(frame:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                        local t = desc.Text
+                        if t then
+                            if page == "EGG" and (t:find("EGG", 1, true) or t:find("TELUR", 1, true) or t:find("TRỨNG", 1, true)) then hasText = true end
+                            if page == "FARM" and (t:find("FARM", 1, true) or t:find("FARMING", 1, true) or t:find("BẮT ĐẦU", 1, true) or t:find("MULAI", 1, true)) then hasText = true end
+                            if page == "PETS" and (t:find("PETS", 1, true) or t:find("HEWAN", 1, true) or t:find("THÚ CƯNG", 1, true)) then hasText = true end
+                            if page == "CONFIG" and (t:find("CONFIG", 1, true) or t:find("KONFIGURASI", 1, true) or t:find("CẤU HÌNH", 1, true) or t:find("CÀI ĐẶT", 1, true)) then hasText = true end
+                        end
+                    end
+                end
+                if hasText then
+                    return frame
+                end
+            end
+        end
+        return nil
+    end
+
+    return findContainerByTab(pageName)
+end
+
+-- Fungsi deteksi halaman utama
+local function detectPage()
+    local window = findOnhubWindow()
+    if not window then return "UNKNOWN", nil end
+
+    -- Coba tentukan halaman berdasarkan tab aktif
+    local function getActivePage()
+        -- Cari semua tab
+        for _, child in ipairs(window:GetDescendants()) do
+            if child:IsA("TextButton") or child:IsA("TextLabel") then
+                local txt = child.Text
+                if txt then
+                    -- Cek apakah tab ini aktif (background terang atau ada indicator)
+                    local isActive = false
+                    if child:IsA("TextButton") and child.BackgroundColor3 and child.BackgroundColor3.r > 0.5 then
+                        isActive = true
+                    end
+                    -- cek indicator
+                    for _, sibling in ipairs(child.Parent:GetChildren()) do
+                        if sibling:IsA("Frame") and sibling.Position.Y.Scale > 0.8 and sibling.Size.Y.Scale < 0.05 then
+                            isActive = true
+                            break
+                        end
+                    end
+                    if isActive then
+                        if txt:find("EGG", 1, true) or txt:find("TELUR", 1, true) or txt:find("TRỨNG", 1, true) then return "EGG"
+                        elseif txt:find("FARM", 1, true) or txt:find("FARMING", 1, true) or txt:find("BẮT ĐẦU", 1, true) or txt:find("MULAI", 1, true) then return "FARM"
+                        elseif txt:find("PETS", 1, true) or txt:find("HEWAN", 1, true) or txt:find("THÚ CƯNG", 1, true) then return "PETS"
+                        elseif txt:find("CONFIG", 1, true) or txt:find("KONFIGURASI", 1, true) or txt:find("CẤU HÌNH", 1, true) or txt:find("CÀI ĐẶT", 1, true) then return "CONFIG"
+                        end
+                    end
+                end
+            end
+        end
+        -- Jika tidak ada tab aktif, cari berdasarkan konten dominan
+        for _, frame in ipairs(window:GetDescendants()) do
+            if frame:IsA("Frame") and frame.Visible and frame.AbsoluteSize.X > 200 and frame.AbsoluteSize.Y > 100 then
+                local hasEgg, hasFarm, hasPets, hasConfig = false, false, false, false
+                for _, desc in ipairs(frame:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                        local t = desc.Text
+                        if t then
+                            if t:find("EGG", 1, true) or t:find("TELUR", 1, true) or t:find("TRỨNG", 1, true) then hasEgg = true end
+                            if t:find("FARM", 1, true) or t:find("FARMING", 1, true) or t:find("BẮT ĐẦU", 1, true) or t:find("MULAI", 1, true) then hasFarm = true end
+                            if t:find("PETS", 1, true) or t:find("HEWAN", 1, true) or t:find("THÚ CƯNG", 1, true) then hasPets = true end
+                            if t:find("CONFIG", 1, true) or t:find("KONFIGURASI", 1, true) or t:find("CẤU HÌNH", 1, true) or t:find("CÀI ĐẶT", 1, true) then hasConfig = true end
+                        end
+                    end
+                end
+                if hasEgg and not hasFarm and not hasPets and not hasConfig then return "EGG", frame end
+                if hasFarm and not hasEgg and not hasPets and not hasConfig then return "FARM", frame end
+                if hasPets and not hasEgg and not hasFarm and not hasConfig then return "PETS", frame end
+                if hasConfig and not hasEgg and not hasFarm and not hasPets then return "CONFIG", frame end
+            end
+        end
+        return "UNKNOWN", nil
+    end
+
+    local page, container = getActivePage()
+    if page == "UNKNOWN" then
+        -- Fallback: cari container berdasarkan teks
+        for _, frame in ipairs(window:GetDescendants()) do
+            if frame:IsA("Frame") and frame.Visible and frame.AbsoluteSize.X > 200 and frame.AbsoluteSize.Y > 100 then
+                local hasEgg, hasFarm, hasPets, hasConfig = false, false, false, false
+                for _, desc in ipairs(frame:GetDescendants()) do
+                    if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                        local t = desc.Text
+                        if t then
+                            if t:find("EGG", 1, true) or t:find("TELUR", 1, true) or t:find("TRỨNG", 1, true) then hasEgg = true end
+                            if t:find("FARM", 1, true) or t:find("FARMING", 1, true) or t:find("BẮT ĐẦU", 1, true) or t:find("MULAI", 1, true) then hasFarm = true end
+                            if t:find("PETS", 1, true) or t:find("HEWAN", 1, true) or t:find("THÚ CƯNG", 1, true) then hasPets = true end
+                            if t:find("CONFIG", 1, true) or t:find("KONFIGURASI", 1, true) or t:find("CẤU HÌNH", 1, true) or t:find("CÀI ĐẶT", 1, true) then hasConfig = true end
+                        end
+                    end
+                end
+                if hasEgg then page, container = "EGG", frame break end
+                if hasFarm then page, container = "FARM", frame break end
+                if hasPets then page, container = "PETS", frame break end
+                if hasConfig then page, container = "CONFIG", frame break end
+            end
+        end
+    end
+
+    if page == "UNKNOWN" then
+        page, container = "EGG", window  -- default ke EGG jika tidak terdeteksi
+    end
+
+    return page, container
+end
+
+-- ===============================================================================
+--  BAYUAJELAH UI MANAGER (ANTI-OVERLAP / SAFE GLASS)
+--  UI-only: tidak mengubah layout/logic asli. Hanya memberi surface glass pada
+--  window, sidebar, button, scrolling panel, dan card yang benar-benar visual.
+-- ===============================================================================
+
+local originalProps = {}
+local eggElements = {}
+local petsElements = {}
+
+local GLASS = {
+    Surface = Color3.fromRGB(10, 65, 125),
+    Window = Color3.fromRGB(5, 28, 58),
+    Border = Color3.fromRGB(65, 175, 240),
+    Text = Color3.fromRGB(245, 250, 255),
+    Transparency = 0.18,
+}
+
+local function remember(obj)
+    if not obj or originalProps[obj] then return end
+    originalProps[obj] = {
+        BackgroundColor3 = obj.BackgroundColor3,
+        BackgroundTransparency = obj.BackgroundTransparency,
+        BorderSizePixel = obj.BorderSizePixel,
+        ZIndex = obj.ZIndex,
+    }
+end
+
+local function restore(obj)
+    local props = originalProps[obj]
+    if not props or not obj or not obj.Parent then return end
+    pcall(function()
+        obj.BackgroundColor3 = props.BackgroundColor3
+        obj.BackgroundTransparency = props.BackgroundTransparency
+        obj.BorderSizePixel = props.BorderSizePixel
+        obj.ZIndex = props.ZIndex
+    end)
+    originalProps[obj] = nil
+end
+
+local function destroyOwned(list)
+    for i = #list, 1, -1 do
+        local obj = list[i]
+        if obj and obj.Parent then pcall(function() obj:Destroy() end) end
+        list[i] = nil
+    end
+end
+
+local function hasTextOrImage(obj)
+    for _, d in ipairs(obj:GetDescendants()) do
+        if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("ImageLabel") or d:IsA("ImageButton") then
+            return true
+        end
+    end
+    return false
+end
+
+local function isVisualCard(obj, root)
+    if obj == root then return true end
+    if not obj.Visible then return false end
+    if obj:IsA("TextButton") or obj:IsA("ImageButton") then return true end
+    if obj:IsA("ScrollingFrame") then return true end
+    if not obj:IsA("Frame") and not obj:IsA("CanvasGroup") then return false end
+
+    local size = obj.AbsoluteSize
+    if size.X < 70 or size.Y < 28 then return false end
+
+    -- Frame langsung di dalam ScrollingFrame biasanya adalah item/card.
+    if obj.Parent and obj.Parent:IsA("ScrollingFrame") then return true end
+
+    -- Panel besar yang memiliki konten tekstual/gambar.
+    if size.X > 180 and size.Y > 60 and hasTextOrImage(obj) then return true end
+
+    return false
+end
+
+local function addWindowBackground(root, list)
+    if not root or not root:IsA("GuiObject") then return end
+    local old = root:FindFirstChild("BayuAjeLah_SafeBackground")
+    if old then return end
+
+    local asset = bayuGetBackgroundAsset()
+    if not asset then return end
+
+    local bg = Instance.new("ImageLabel")
+    bg.Name = "BayuAjeLah_SafeBackground"
+    bg.BackgroundTransparency = 1
+    bg.BorderSizePixel = 0
+    bg.Size = UDim2.fromScale(1, 1)
+    bg.Position = UDim2.fromScale(0, 0)
+    bg.Image = asset
+    bg.ScaleType = Enum.ScaleType.Crop
+    bg.ImageTransparency = 0.24
+    bg.Active = false
+    bg.Selectable = false
+    bg.ZIndex = math.max(0, root.ZIndex)
+    bg:SetAttribute("BayuAjeLahOwned", true)
+    bg.Parent = root
+    table.insert(list, bg)
+
+    -- Pastikan seluruh content root berada di atas background.
+    for _, child in ipairs(root:GetChildren()) do
+        if child ~= bg and child:IsA("GuiObject") then
+            if child.ZIndex <= bg.ZIndex then child.ZIndex = bg.ZIndex + 1 end
+        end
+    end
+end
+
+local function applySafeGlass(root, ownedList)
+    if not root or not root:IsA("GuiObject") then return end
+    destroyOwned(ownedList)
+
+    -- Jangan pernah membuat child background di ScreenGui/CoreGui.
+    addWindowBackground(root, ownedList)
+
+    remember(root)
+    local baseZ = root.ZIndex
+    if baseZ < 1 then baseZ = 1 end
+    root.ZIndex = baseZ
+    root.BackgroundColor3 = GLASS.Window
+    root.BackgroundTransparency = 0.08
+    root.BorderSizePixel = 0
+
+    local seen = {}
+    local function style(obj)
+        if seen[obj] or obj == root then return end
+        seen[obj] = true
+        if not isVisualCard(obj, root) then return end
+
+        remember(obj)
+        obj.BackgroundColor3 = GLASS.Surface
+        obj.BackgroundTransparency = GLASS.Transparency
+        obj.BorderSizePixel = 0
+        obj.ZIndex = math.max(obj.ZIndex, baseZ + 1)
+
+        local corner = obj:FindFirstChild("BayuAjeLah_Corner")
+        if not corner then
+            corner = Instance.new("UICorner")
+            corner.Name = "BayuAjeLah_Corner"
+            corner.CornerRadius = UDim.new(0, 10)
+            corner:SetAttribute("BayuAjeLahOwned", true)
+            corner.Parent = obj
+            table.insert(ownedList, corner)
+        end
+
+        local stroke = obj:FindFirstChild("BayuAjeLah_Stroke")
+        if not stroke then
+            stroke = Instance.new("UIStroke")
+            stroke.Name = "BayuAjeLah_Stroke"
+            stroke.Color = GLASS.Border
+            stroke.Transparency = 0.38
+            stroke.Thickness = 1
+            stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            stroke:SetAttribute("BayuAjeLahOwned", true)
+            stroke.Parent = obj
+            table.insert(ownedList, stroke)
+        end
+    end
+
+    -- Root children first, then only genuine cards. This avoids styling every
+    -- nested Frame (the main cause of the stacked/ghosted appearance).
+    for _, child in ipairs(root:GetChildren()) do
+        if child:IsA("GuiObject") and child.Name ~= "BayuAjeLah_SafeBackground" then
+            style(child)
+            if child:IsA("ScrollingFrame") then
+                for _, item in ipairs(child:GetChildren()) do
+                    if item:IsA("GuiObject") then style(item) end
+                end
+            end
+        end
+    end
+
+    -- Keep all nested text/images above their card surface without rewriting
+    -- their individual positions/sizes.
+    for _, obj in ipairs(root:GetDescendants()) do
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            if not obj:GetAttribute("BayuAjeLahOwned") then
+                obj.ZIndex = math.max(obj.ZIndex, baseZ + 2)
+            end
+        end
+    end
+end
+
+local function cleanupPage(root)
+    if not root then return end
+    for _, obj in ipairs(root:GetDescendants()) do
+        if obj:GetAttribute("BayuAjeLahOwned") then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    for obj, _ in pairs(originalProps) do
+        if obj and obj.Parent and obj:IsDescendantOf(root) then restore(obj) end
+    end
+end
+
+local function applyEggUI(container)
+    if not container then return end
+    cleanupPage(container)
+    applySafeGlass(container, eggElements)
+    print("[BayuAjeLah] Safe glass UI applied: EGG")
+end
+
+local function removeEggUI(container)
+    if container then cleanupPage(container) end
+    destroyOwned(eggElements)
+end
+
+local function applyPetsUI(container)
+    if not container then return end
+    cleanupPage(container)
+    applySafeGlass(container, petsElements)
+    print("[BayuAjeLah] Safe glass UI applied: PETS")
+end
+
+local function removePetsUI(container)
+    if container then cleanupPage(container) end
+    destroyOwned(petsElements)
+end
+
+-- ==============================================================================
+--  PET VIEW GATE: hanya boleh terlihat pada halaman PETS
+-- ==============================================================================
+local function looksLikePetView(obj)
+    if not obj or not obj:IsA("GuiObject") then return false end
+    local name = obj.Name:lower()
+    local size = obj.AbsoluteSize
+    if name:find("viewpets", 1, true) or name:find("view_pets", 1, true) or name:find("petview", 1, true) then
+        return true
+    end
+    if size.X < 55 or size.Y < 35 or size.X > 320 or size.Y > 260 then return false end
+    local rarityHit, petNameHit, viewportHit, imageHit = false, false, false, false
+    local rarities = {"DIVINE", "ETERNAL", "COSMIC", "SECRET", "MYTHIC", "LEGENDARY"}
+    local names = {"ARCHDEMON DRAGON", "DREADSCALE", "KITSUNE", "MECHA DREADSCALE", "NIGHTFLAME", "SHATTERED COLOSSUS", "UNICORN", "BAIROG", "SPIDERON", "FROST WYRM", "PHOENIX", "LEVIATHAN"}
+    for _, d in ipairs(obj:GetDescendants()) do
+        if d:IsA("ViewportFrame") then viewportHit = true end
+        if d:IsA("ImageLabel") or d:IsA("ImageButton") then imageHit = true end
+        if d:IsA("TextLabel") or d:IsA("TextButton") then
+            local t = tostring(d.Text or ""):upper()
+            if t:find("VIEW PETS", 1, true) or t:find("VIEWPETS", 1, true) then return true end
+            for _, rarity in ipairs(rarities) do if t == rarity then rarityHit = true break end end
+            for _, petName in ipairs(names) do if t == petName then petNameHit = true break end end
+        end
+    end
+    return (rarityHit and (petNameHit or viewportHit or imageHit)) or (petNameHit and viewportHit)
+end
+
+
+local function enforcePetsOnly(page, window)
+    if not window then return end
+    local allowPets = page == "PETS"
+    for _, obj in ipairs(window:GetDescendants()) do
+        if looksLikePetView(obj) then
+            pcall(function() obj.Visible = allowPets end)
+        end
+    end
+end
+
+-- ============================================================================== 
+--  MAIN LOOP UNTUK UPDATE HALAMAN
+-- ============================================================================== 
+
+task.spawn(function()
+    local lastPage = "UNKNOWN"
+    local lastContainer = nil
+
+    while true do
+        pcall(function()
+            local page, container = detectPage()
+            enforcePetsOnly(page, findOnhubWindow())
+            if page ~= lastPage or container ~= lastContainer then
+                if lastPage == "EGG" and lastContainer then removeEggUI(lastContainer)
+                elseif lastPage == "PETS" and lastContainer then removePetsUI(lastContainer) end
+
+                if page == "EGG" and container then applyEggUI(container)
+                elseif page == "PETS" and container then applyPetsUI(container) end
+
+                lastPage = page
+                lastContainer = container
+                currentPage = page
+                currentContainer = container
+                print("[BayuAjeLah] Page changed to:", page)
+            end
+        end)
+        task.wait(0.5)
+    end
+end)
+
+-- ==============================================================================
+--  PRESET SLIDER (MEMORY + UI)
+-- ==============================================================================
+
 local presetMemoryDone = false
 local presetUIDone = false
 
@@ -50,9 +638,8 @@ local function applyUISliderPresets(root)
         for _, label in ipairs(root:GetDescendants()) do
             if label:IsA("TextLabel") then
                 local txt = label.Text
-                -- Thanh TP: 1200 mét
-                if not tpFound and (txt:find("Khoảng cách tối thiểu để TP") or txt:find("Minimum distance for TP")) then
-                    label.Text = "Khoảng cách tối thiểu để TP: 1200 mét"
+                if not tpFound and (txt:find("Jarak minimum untuk TP") or txt:find("Minimum distance for TP")) then
+                    label.Text = "Jarak minimum untuk TP: 1200 meter"
                     local row = label.Parent
                     if row then
                         for _, child in ipairs(row:GetDescendants()) do
@@ -63,9 +650,8 @@ local function applyUISliderPresets(root)
                             end
                         end
                     end
-                -- Thanh Hop: 60 mét
-                elseif not hopFound and (txt:find("Độ dài bước nhảy") or txt:find("Hop step")) then
-                    label.Text = "Độ dài bước nhảy (thấp = an toàn): 60 mét"
+                elseif not hopFound and (txt:find("Panjang langkah hop") or txt:find("Hop step")) then
+                    label.Text = "Panjang langkah hop (rendah = aman): 60 meter"
                     local row = label.Parent
                     if row then
                         for _, child in ipairs(row:GetDescendants()) do
@@ -86,7 +672,10 @@ local function applyUISliderPresets(root)
     end)
 end
 
--- ==================== 2. MODULE FLOOR STEAL & INSTANT CLICK ====================
+-- ==============================================================================
+--  FLOOR STEAL & INSTANT CLICK
+-- ==============================================================================
+
 task.spawn(function()
     local function firePrompt(prompt)
         if not prompt or not prompt.Parent then return end
@@ -117,7 +706,6 @@ task.spawn(function()
         firePrompt(prompt)
     end)
 
-    -- Phím tắt B chủ động kích hoạt
     UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
         if input.KeyCode == Enum.KeyCode.B then
@@ -141,7 +729,10 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 3. MODULE ANTI-RAGDOLL V2 ====================
+-- ==============================================================================
+--  ANTI-RAGDOLL V2
+-- ==============================================================================
+
 task.spawn(function()
     local activeRagdollLoop = nil
 
@@ -225,7 +816,10 @@ task.spawn(function()
     LocalPlayer.CharacterAdded:Connect(setupHardAntiRagdoll)
 end)
 
--- ==================== 4. MODULE ANTI-TRAP ====================
+-- ==============================================================================
+--  ANTI-TRAP
+-- ==============================================================================
+
 task.spawn(function()
     local trapKeywords = {"trap", "beartrap", "subspace", "mine", "landmine", "turret", "spike"}
 
@@ -270,7 +864,10 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 5. MODULE POTATO MODE (KHÔNG CAN THIỆP GIAO DIỆN PET) ====================
+-- ==============================================================================
+--  POTATO MODE
+-- ==============================================================================
+
 task.spawn(function()
     pcall(function()
         if settings and settings().Rendering then
@@ -328,23 +925,26 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 6. DỌN SẠCH BẢN GHIM CŨ ====================
+-- ==============================================================================
+--  HAPUS GUI LAMA
+-- ==============================================================================
+
 local cleanList = {
-    "Ronnei_ONhub_DockedMaster",
-    "Ronnei_HeaderDockedMaster",
-    "Ronnei_PerfectDockMaster",
-    "Ronnei_ONhub_CompactMaster",
-    "Ronnei_ONhub_UltimateConfig",
-    "Ronnei_ONhub_AutoBypassMaster",
-    "Ronnei_ONhub_EncryptedMaster",
-    "Ronnei_ONhub_UltraPotatoMaster",
-    "Ronnei_ONhub_AntiTrapRagdollMaster",
-    "Ronnei_ONhub_HardLockedMaster",
-    "Ronnei_ONhub_FloorStealMaster",
-    "Ronnei_ONhub_CleanInteractMaster",
-    "Ronnei_ONhub_FinalDeviceFixed",
-    "Ronnei_ONhub_UntouchedPetsMaster",
-    "Ronnei_ONhub_FailsafeMaster"
+    "BayuAjeLah_ONhub_DockedMaster",
+    "BayuAjeLah_HeaderDockedMaster",
+    "BayuAjeLah_PerfectDockMaster",
+    "BayuAjeLah_ONhub_CompactMaster",
+    "BayuAjeLah_ONhub_UltimateConfig",
+    "BayuAjeLah_ONhub_AutoBypassMaster",
+    "BayuAjeLah_ONhub_EncryptedMaster",
+    "BayuAjeLah_ONhub_UltraPotatoMaster",
+    "BayuAjeLah_ONhub_AntiTrapRagdollMaster",
+    "BayuAjeLah_ONhub_HardLockedMaster",
+    "BayuAjeLah_ONhub_FloorStealMaster",
+    "BayuAjeLah_ONhub_CleanInteractMaster",
+    "BayuAjeLah_ONhub_FinalDeviceFixed",
+    "BayuAjeLah_ONhub_UntouchedPetsMaster",
+    "BayuAjeLah_ONhub_FailsafeMaster"
 }
 for _, name in ipairs(cleanList) do
     pcall(function()
@@ -353,7 +953,10 @@ for _, name in ipairs(cleanList) do
     end)
 end
 
--- ==================== 7. AUTO-BYPASS DISCORD ====================
+-- ==============================================================================
+--  AUTO-BYPASS DISCORD
+-- ==============================================================================
+
 local function triggerButtonClick(btn)
     if not btn then return end
     if firesignal then
@@ -430,7 +1033,10 @@ task.spawn(function()
     end
 end)
 
--- ==================== 8. NẠP MÃ HÓA SCRIPT GỐC ====================
+-- ==============================================================================
+--  LOAD SCRIPT ENCRYPTED
+-- ==============================================================================
+
 task.spawn(function()
     pcall(function()
         local _byteStream = {
@@ -452,12 +1058,15 @@ task.spawn(function()
     end)
 end)
 
--- ==================== 9. CẤU HÌNH GIAO DIỆN & TỪ ĐIỂN DỊCH ====================
+-- ==============================================================================
+--  KONFIGURASI UI & TERJEMAHAN (VIETNAM → INDONESIA)
+-- ==============================================================================
+
 local THEME = {
-    BarBG      = Color3.fromRGB(15, 25, 18),
-    CardBG     = Color3.fromRGB(20, 36, 26),
-    Border     = Color3.fromRGB(40, 80, 50),
-    AccentMint = Color3.fromRGB(0, 230, 120),
+    BarBG      = Color3.fromRGB(8, 35, 75),
+    CardBG     = Color3.fromRGB(10, 65, 125),
+    Border     = Color3.fromRGB(65, 165, 235),
+    AccentMint = Color3.fromRGB(55, 190, 255),
     ToggleOff  = Color3.fromRGB(38, 43, 56),
     TextMain   = Color3.fromRGB(245, 248, 255),
     TextSub    = Color3.fromRGB(150, 180, 160),
@@ -465,118 +1074,140 @@ local THEME = {
     FontM      = Enum.Font.GothamMedium
 }
 
+-- Daftar terjemahan VIETNAM → INDONESIA (ditambah dari Inggris juga)
 local RAW_TRANSLATIONS = {
-    {"Fast mode (grab the closest)", "Chế độ nhanh (nhặt trứng gần nhất)"},
-    {"Selected pets only", "Chỉ nhặt thú cưng đã chọn"},
-    {"Mutated eggs only", "Chỉ nhặt trứng đột biến"},
-    {"Skip eggs with a player within [PvP]:", "Bỏ qua trứng có người gần [PvP]:"},
-    {"Skip eggs with a player within [PvP]", "Bỏ qua trứng có người gần [PvP]"},
-    {"Minimum rarity:", "Độ hiếm tối thiểu:"},
-    {"Minimum rarity", "Độ hiếm tối thiểu"},
-    {"Maximum target distance:", "Khoảng cách mục tiêu tối đa:"},
-    {"Maximum target distance", "Khoảng cách mục tiêu tối đa"},
-    {"TARGET FILTER", "BỘ LỌC MỤC TIÊU"},
-    {"On, the ranking is $/s by the game's own formula and the weights above are inert (distance only counts when the instant TP is unusable).", "Khi bật, mục tiêu xếp theo $/s theo công thức của game và các trọng số trên sẽ tắt (khoảng cách chỉ tính khi không thể dùng TP tức thì)."},
-    {"Rank by pure $/s", "Ưu tiên thuần theo $/giây"},
-    {"Rarity weight:", "Trọng số độ hiếm:"},
-    {"Rarity weight", "Trọng số độ hiếm"},
-    {"Mutation weight:", "Trọng số đột biến:"},
-    {"Mutation weight", "Trọng số đột biến"},
-    {"Size weight:", "Trọng số kích thước:"},
-    {"Size weight", "Trọng số kích thước"},
-    {"Distance penalty:", "Phạt khoảng cách:"},
-    {"Distance penalty", "Phạt khoảng cách"},
-    {"RANKING WEIGHTS", "TRỌNG SỐ ƯU TIÊN MỤC TIÊU"},
-    {"Approach radius (server accepts 9):", "Bán kính tiếp cận (server nhận 9):"},
-    {"Approach radius (server accepts 9)", "Bán kính tiếp cận (server nhận 9)"},
-    {"Approach radius", "Bán kính tiếp cận"},
-    {"server accepts 9", "server nhận 9"},
-    {"Max time per trip:", "Thời gian tối đa mỗi chuyến:"},
-    {"Max time per trip", "Thời gian tối đa mỗi chuyến"},
-    {"Stop the farm on rollback", "Dừng cày khi bị giật lùi (rollback)"},
-    {"MOVEMENT AND SAFETY", "DI CHUYỂN & AN TOÀN"},
-    {"Fast hop (chained CFrame steps)", "Nhảy nhanh (bước CFrame liên tục)"},
-    {"Instant TP (uses the ragdoll window)", "TP tức thì (dùng khe hở ragdoll)"},
-    {"Minimum distance for TP:", "Khoảng cách tối thiểu để TP:"},
-    {"Minimum distance for TP", "Khoảng cách tối thiểu để TP"},
-    {"Hop step (lower = safer):", "Độ dài bước nhảy (thấp = an toàn):"},
-    {"Hop step (lower = safer)", "Độ dài bước nhảy (thấp = an toàn)"},
-    {"Hop interval (higher = safer):", "Thời gian chờ mỗi bước (cao = an toàn):"},
-    {"Hop interval (higher = safer)", "Thời gian chờ mỗi bước (cao = an toàn)"},
-    {"Timestamp rewind per step:", "Tua ngược thời gian mỗi bước:"},
-    {"Timestamp rewind per step", "Tua ngược thời gian mỗi bước"},
-    {"FAST TRAVEL", "DI CHUYỂN NHANH (TELEPORT)"},
-    {"The anti-cheat validates distance divided by time. The hop rewinds the timestamp of its samples before every step:", "Chống hack kiểm tra khoảng cách chia cho thời gian. Bước nhảy tua lại mốc thời gian trước mỗi bước:"},
-    {"The instant TP needs a ragdoll window opened by the SERVER. It uses a first-area egg as the ticket but does NOT consume it: the strike only DROPS that egg and it returns to its own slot, so the real cost is the ~0.5s to walk over and grab it, not an egg.", "TP tức thì cần khe hở ragdoll do SERVER mở. Nó dùng trứng khu 1 làm vé nhưng KHÔNG mất: đòn đánh chỉ làm RƠI trứng về chỗ cũ, chi phí thực chỉ là ~0.5s đi lại nhặt, không mất trứng."},
-    {"One window = ONE leg of the trip. Measured: the server refuses to pick up any egg for the whole ragdoll (cannot carry eggs while knocked down) and the position exemption dies the instant the ragdoll ends - a TP written 51ms after EndRagdoll already gets relocated. So the TP covers the way OUT and the way back with the egg is always the chained hop.", "Một khe hở = 1 lượt đi. Server từ chối nhặt trứng khi đang ragdoll (không thể cầm trứng khi ngã) và quyền miễn trừ vị trí mất ngay khi hết ragdoll. TP dùng cho lượt ĐI, lượt VỀ luôn là nhảy CFrame."},
-    {"No metatable hook is used: __namecall got a kick in a direct test.", "Không dùng hook metatable: __namecall đã bị kick khi thử nghiệm."},
-    {"Travel speed is step divided by interval. Default 80 / 0.08 = 1000", "Tốc độ di chuyển = bước chia cho thời gian chờ. Mặc định 80 / 0.08 = 1000"},
-    {"GETTING ROLLBACK? Raise the rewind first as it inflates the distance the client-side detector allows per step and costs nothing. Only then lower the step, or raise the interval.", "BỊ GIẬT LÙI? Hãy tăng tua ngược thời gian trước vì nó mở rộng khoảng cách cho phép mỗi bước. Sau đó mới giảm bước hoặc tăng thời gian chờ."},
-    {"Every revert forces a retry, so a big step is slower in practice.", "Mỗi lần lùi phải thử lại nên bước lớn thực tế lại chậm hơn."},
-    {"Count pets you already own", "Tính cả thú cưng bạn đã có"},
-    {"Plant recipe eggs on the plot", "Đặt trứng công thức lên khu đất"},
-    {"Plant index eggs on the plot", "Đặt trứng sưu tập lên khu đất"},
-    {"The machine CONSUMES the 3 pets on trade-in. With the first option on, a pet you already have free in the inventory closes that slot and the hub will not hunt that animal - the bar shows the count (p = pet, o = egg, eq = placed). Turn it off to hunt all three from scratch and keep the pets you have.", "Máy RIFT sẽ TIÊU THỤ 3 thú cưng khi đổi. Bật tùy chọn đầu, thú cưng có sẵn trong túi sẽ lấp ô đó và hub không cần săn con đó nữa. Tắt đi nếu muốn săn mới cả 3 và giữ lại thú cưng đang có."},
-    {"Floating button (show/hide)", "Nút tròn nổi (hiện/ẩn)"},
-    {"Interface scale:", "Tỷ lệ giao diện:"},
-    {"Interface scale", "Tỷ lệ giao diện"},
-    {"Platform: mobile (touch, no keyboard). The scale starts automatic from the resolution (base window 620x420 shrunk to fit 92%x 88% of the screen). Touching the slider pins the", "Nền tảng: di động (cảm ứng, không phím). Tỷ lệ tự động theo độ phân giải màn hình (cửa sổ 620x420 thu gọn vừa 92%x 88% màn hình). Chạm thanh trượt để cố định"},
-    {"INTERFACE", "GIAO DIỆN"},
-    {"RIFT", "MÁY RIFT"},
-    {"no mode: farming by $/s. RIFT hunts the machine recipe. INDEX hunts what your codex is missing", "Cơ bản: cày theo $/s. RIFT: săn công thức máy. SƯU TẬP: săn trứng thiếu"},
-    {"no mode: farming by $/s. RIFT hunts the machine. INDEX hunts what your codex is missing", "Cơ bản: cày theo $/s. RIFT: săn máy. SƯU TẬP: săn trứng thiếu"},
-    {"hunts what your codex is missing", "săn trứng còn thiếu"},
-    {"RIFT hunts the machine recipe", "RIFT săn công thức máy"},
-    {"RIFT hunts the machine", "RIFT săn máy"},
-    {"no mode: farming by $/s.", "Cơ bản: cày theo $/s."},
-    {"START FARM", "BẮT ĐẦU CÀY"},
-    {"STOP FARM", "DỪNG CÀY"},
-    {"BEST TARGETS RIGHT NOW", "MỤC TIÊU TỐT NHẤT HIỆN TẠI"},
-    {"CLEAR TARGET", "HỦY MỤC TIÊU"},
-    {"click to lock", "bấm để khóa"},
-    {"locked", "đã khóa"},
-    {"per second", "/giây"},
-    {"RIFT: OFF", "RIFT: TẮT"},
-    {"RIFT: ON", "RIFT: BẬT"},
-    {"INDEX: OFF", "SƯU TẬP: TẮT"},
-    {"INDEX: ON", "SƯU TẬP: BẬT"},
-    {"FARM", "CÀY TIỀN"},
-    {"PETS", "THÚ CƯNG"},
-    {"CONFIG", "CẤU HÌNH"},
-    {"heading to Koi", "Đang tới Cá Koi"},
-    {"heading to", "Đang tới"},
-    {"delivered", "đã giao"},
-    {"failed", "thất bại"},
-    {"lost", "mất"},
-    {"idle", "đang chờ"},
-    {"studs", "mét"},
-    {"Burrowing Owl", "Cú Hang"},
-    {"Bladehide", "Thằn Lằn Gai"},
-    {"Bronto", "Khủng Long Cổ Dài"},
-    {"Chicken", "Gà"},
-    {"Dog", "Chó"},
-    {"Rhinotaur", "Tê Giác Quái"},
-    {"Mantaris", "Bọ Ngựa Quái"},
-    {"Triceratops", "Khủng Long 3 Sừng"},
-    {"Whale Shark", "Cá Mập Voi"},
-    {"Beluga Whale", "Cá Voi Trắng"},
-    {"Koi", "Cá Koi"},
-    {"Common", "Thường"},
-    {"Rare", "Hiếm"},
-    {"Epic", "Sử Thi"},
-    {"Legendary", "Huyền Thoại"},
-    {"Mythic", "Thần Thoại"},
-    {"Divine", "Thần Thánh"},
-    {"Cosmic", "Vũ Trụ"},
-    {"Secret", "Bí Mật"},
-    {"Cherry Blossom", "Hoa Anh Đào"},
-    {"Forest", "Rừng Rậm"},
-    {"Desert", "Sa Mạc"},
-    {"Titan Temple", "Đền Titan"},
-    {"Abyss Ocean", "Biển Vực Sâu"},
-    {"Prehistoric", "Tiền Sử"}
+    -- Tombol utama
+    {"BẮT ĐẦU", "MULAI"},
+    {"DỪNG", "BERHENTI"},
+    {"TRỨNG", "TELUR"},
+    {"THÚ CƯNG", "HEWAN"},
+    {"CẤU HÌNH", "KONFIGURASI"},
+    {"CÀI ĐẶT", "PENGATURAN"},
+    {"MỤC TIÊU", "TARGET"},
+    {"ĐỘ HIẾM TỐI THIỂU", "KELANGKAAN MINIMUM"},
+    {"KHOẢNG CÁCH TỐI ĐA", "JARAK MAKSIMUM"},
+    {"DI CHUYỂN NHANH", "PERJALANAN CEPAT"},
+    {"AN TOÀN", "KEAMANAN"},
+    {"PHỔ BIẾN", "UMUM"},
+    {"HIẾM", "LANGKA"},
+    {"HUYỀN THOẠI", "LEGENDARIS"},
+    {"THẦN THOẠI", "MITIK"},
+    {"THIÊNG LIÊNG", "DEWA"},
+    {"BÍ MẬT", "RAHASIA"},
+
+    -- Filter target
+    {"Fast mode (grab the closest)", "Mode cepat (ambil telur terdekat)"},
+    {"Selected pets only", "Hanya hewan peliharaan terpilih"},
+    {"Mutated eggs only", "Hanya telur mutasi"},
+    {"Skip eggs with a player within [PvP]:", "Lewati telur dengan pemain dalam jarak [PvP]:"},
+    {"Skip eggs with a player within [PvP]", "Lewati telur dengan pemain dalam jarak [PvP]"},
+    {"Minimum rarity:", "Kelangkaan minimum:"},
+    {"Minimum rarity", "Kelangkaan minimum"},
+    {"Maximum target distance:", "Jarak target maksimum:"},
+    {"Maximum target distance", "Jarak target maksimum"},
+    {"TARGET FILTER", "FILTER TARGET"},
+    {"On, the ranking is $/s by the game's own formula and the weights above are inert (distance only counts when the instant TP is unusable).", "Saat aktif, peringkat berdasarkan $/s sesuai formula game dan bobot di atas tidak dipakai (jarak hanya diperhitungkan saat TP instan tidak bisa digunakan)."},
+    {"Rank by pure $/s", "Utamakan murni $/detik"},
+    {"Rarity weight:", "Bobot kelangkaan:"},
+    {"Rarity weight", "Bobot kelangkaan"},
+    {"Mutation weight:", "Bobot mutasi:"},
+    {"Mutation weight", "Bobot mutasi"},
+    {"Size weight:", "Bobot ukuran:"},
+    {"Size weight", "Bobot ukuran"},
+    {"Distance penalty:", "Penalti jarak:"},
+    {"Distance penalty", "Penalti jarak"},
+    {"RANKING WEIGHTS", "BOBOT PERINGKAT"},
+    {"Approach radius (server accepts 9):", "Radius pendekatan (server menerima 9):"},
+    {"Approach radius (server accepts 9)", "Radius pendekatan (server menerima 9)"},
+    {"Approach radius", "Radius pendekatan"},
+    {"server accepts 9", "server menerima 9"},
+    {"Max time per trip:", "Waktu maksimum per perjalanan:"},
+    {"Max time per trip", "Waktu maksimum per perjalanan"},
+    {"Stop the farm on rollback", "Hentikan farming saat rollback"},
+    {"MOVEMENT AND SAFETY", "GERAKAN & KEAMANAN"},
+    {"Fast hop (chained CFrame steps)", "Hop cepat (langkah CFrame berantai)"},
+    {"Instant TP (uses the ragdoll window)", "TP instan (menggunakan celah ragdoll)"},
+    {"Minimum distance for TP:", "Jarak minimum untuk TP:"},
+    {"Minimum distance for TP", "Jarak minimum untuk TP"},
+    {"Hop step (lower = safer):", "Panjang langkah hop (rendah = aman):"},
+    {"Hop step (lower = safer)", "Panjang langkah hop (rendah = aman)"},
+    {"Hop interval (higher = safer):", "Interval hop (tinggi = aman):"},
+    {"Hop interval (higher = safer)", "Interval hop (tinggi = aman)"},
+    {"Timestamp rewind per step:", "Putar balik waktu per langkah:"},
+    {"Timestamp rewind per step", "Putar balik waktu per langkah"},
+    {"FAST TRAVEL", "PERJALANAN CEPAT"},
+    {"The anti-cheat validates distance divided by time. The hop rewinds the timestamp of its samples before every step:", "Anti-cheat memeriksa jarak dibagi waktu. Hop memutar balik timestamp sampel sebelum setiap langkah:"},
+    {"The instant TP needs a ragdoll window opened by the SERVER. It uses a first-area egg as the ticket but does NOT consume it: the strike only DROPS that egg and it returns to its own slot, so the real cost is the ~0.5s to walk over and grab it, not an egg.", "TP instan membutuhkan celah ragdoll yang dibuka oleh SERVER. Ia menggunakan telur area pertama sebagai tiket tetapi TIDAK menghabiskannya: pukulan hanya MENJATUHKAN telur itu dan kembali ke slot asalnya, jadi biaya sebenarnya adalah ~0.5s untuk berjalan dan mengambilnya, bukan telur."},
+    {"One window = ONE leg of the trip. Measured: the server refuses to pick up any egg for the whole ragdoll (cannot carry eggs while knocked down) and the position exemption dies the instant the ragdoll ends - a TP written 51ms after EndRagdoll already gets relocated. So the TP covers the way OUT and the way back with the egg is always the chained hop.", "Satu celah = SATU bagian perjalanan. Terukur: server menolak mengambil telur selama ragdoll (tidak bisa membawa telur saat terjatuh) dan pengecualian posisi hilang seketika ragdoll berakhir - TP yang ditulis 51ms setelah EndRagdoll sudah dipindahkan. Jadi TP digunakan untuk PERGI, dan jalan pulang dengan telur selalu menggunakan hop berantai."},
+    {"No metatable hook is used: __namecall got a kick in a direct test.", "Tidak menggunakan hook metatable: __namecall telah ditendang dalam uji langsung."},
+    {"Travel speed is step divided by interval. Default 80 / 0.08 = 1000", "Kecepatan perjalanan = langkah dibagi interval. Default 80 / 0.08 = 1000"},
+    {"GETTING ROLLBACK? Raise the rewind first as it inflates the distance the client-side detector allows per step and costs nothing. Only then lower the step, or raise the interval.", "MENGALAMI ROLLBACK? Naikkan putar balik waktu dulu karena itu memperbesar jarak yang diizinkan detektor sisi klien per langkah tanpa biaya. Baru kemudian turunkan langkah, atau naikkan interval."},
+    {"Every revert forces a retry, so a big step is slower in practice.", "Setiap pembalikan memaksa percobaan ulang, jadi langkah besar sebenarnya lebih lambat."},
+    {"Count pets you already own", "Hitung hewan yang sudah dimiliki"},
+    {"Plant recipe eggs on the plot", "Tanam telur resep di lahan"},
+    {"Plant index eggs on the plot", "Tanam telur koleksi di lahan"},
+    {"The machine CONSUMES the 3 pets on trade-in. With the first option on, a pet you already have free in the inventory closes that slot and the hub will not hunt that animal - the bar shows the count (p = pet, o = egg, eq = placed). Turn it off to hunt all three from scratch and keep the pets you have.", "Mesin RIFT akan MENGHABISKAN 3 hewan saat ditukar. Dengan opsi pertama aktif, hewan yang sudah ada di inventaris akan menutup slot itu dan hub tidak akan memburu hewan tersebut - bar menunjukkan jumlah (p = hewan, o = telur, eq = ditanam). Matikan untuk berburu ketiganya dari awal dan pertahankan hewan yang Anda miliki."},
+    {"Floating button (show/hide)", "Tombol mengambang (tampilkan/sembunyikan)"},
+    {"Interface scale:", "Skala antarmuka:"},
+    {"Interface scale", "Skala antarmuka"},
+    {"Platform: mobile (touch, no keyboard). The scale starts automatic from the resolution (base window 620x420 shrunk to fit 92%x 88% of the screen). Touching the slider pins the", "Platform: seluler (sentuh, tanpa keyboard). Skala otomatis dari resolusi (jendela dasar 620x420 diperkecil agar muat 92%x 88% layar). Menyentuh slider akan mengunci"},
+    {"INTERFACE", "ANTARMUKA"},
+    {"RIFT", "RIFT"},
+    {"no mode: farming by $/s. RIFT hunts the machine recipe. INDEX hunts what your codex is missing", "Mode dasar: farming berdasarkan $/s. RIFT: berburu resep mesin. INDEX: berburu telur yang hilang dari koleksi"},
+    {"no mode: farming by $/s. RIFT hunts the machine. INDEX hunts what your codex is missing", "Mode dasar: farming berdasarkan $/s. RIFT: berburu mesin. INDEX: berburu telur yang hilang dari koleksi"},
+    {"hunts what your codex is missing", "berburu telur yang hilang dari koleksi"},
+    {"RIFT hunts the machine recipe", "RIFT berburu resep mesin"},
+    {"RIFT hunts the machine", "RIFT berburu mesin"},
+    {"no mode: farming by $/s.", "Mode dasar: farming berdasarkan $/s."},
+    {"START FARM", "MULAI FARMING"},
+    {"STOP FARM", "HENTIKAN FARMING"},
+    {"BEST TARGETS RIGHT NOW", "TARGET TERBAIK SAAT INI"},
+    {"CLEAR TARGET", "HAPUS TARGET"},
+    {"click to lock", "klik untuk kunci"},
+    {"locked", "terkunci"},
+    {"per second", "/detik"},
+    {"RIFT: OFF", "RIFT: MATI"},
+    {"RIFT: ON", "RIFT: NYALA"},
+    {"INDEX: OFF", "INDEX: MATI"},
+    {"INDEX: ON", "INDEX: NYALA"},
+    {"FARM", "FARMING"},
+    {"PETS", "HEWAN"},
+    {"CONFIG", "KONFIGURASI"},
+    {"heading to Koi", "menuju Koi"},
+    {"heading to", "menuju"},
+    {"delivered", "terkirim"},
+    {"failed", "gagal"},
+    {"lost", "hilang"},
+    {"idle", "menganggur"},
+    {"studs", "meter"},
+    {"Burrowing Owl", "Burung Hantu Penggali"},
+    {"Bladehide", "Kadal Berduri"},
+    {"Bronto", "Brontosaurus"},
+    {"Chicken", "Ayam"},
+    {"Dog", "Anjing"},
+    {"Rhinotaur", "Badak Banteng"},
+    {"Mantaris", "Belalang Sembah Raksasa"},
+    {"Triceratops", "Triceratops"},
+    {"Whale Shark", "Hiu Paus"},
+    {"Beluga Whale", "Paus Beluga"},
+    {"Koi", "Ikan Koi"},
+    {"Common", "Umum"},
+    {"Rare", "Langka"},
+    {"Epic", "Epik"},
+    {"Legendary", "Legendaris"},
+    {"Mythic", "Mitik"},
+    {"Divine", "Dewa"},
+    {"Cosmic", "Kosmik"},
+    {"Secret", "Rahasia"},
+    {"Cherry Blossom", "Sakura"},
+    {"Forest", "Hutan"},
+    {"Desert", "Gurun"},
+    {"Titan Temple", "Kuil Titan"},
+    {"Abyss Ocean", "Samudra Abyss"},
+    {"Prehistoric", "Prasejarah"}
 }
 
+-- Urutkan dari yang terpanjang untuk menghindari subtring conflict
 table.sort(RAW_TRANSLATIONS, function(a, b) return #a[1] > #b[1] end)
 
 local function replacePlain(str, findStr, repStr)
@@ -603,20 +1234,23 @@ local function translateText(raw)
     return res
 end
 
--- ==================== 10. TẠO THANH GHIM DOCKED (310PX) ====================
-local isVietnamese = true
+-- ==============================================================================
+--  DOCKED PIN BAR (310px)
+-- ==============================================================================
+
+local isIndonesian = true   -- default bahasa Indonesia
 local OriginalTexts = {}
 local targetOnhubWindow = nil
 
 local PinGui = Instance.new("ScreenGui")
-PinGui.Name = "Ronnei_ONhub_FailsafeMaster"
+PinGui.Name = "BayuAjeLah_ONhub_FailsafeMaster"
 PinGui.ResetOnSpawn = false
 PinGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 PinGui.DisplayOrder = 999999
 PinGui.Parent = (gethui and gethui()) or CoreGuiService
 
 local PinBar = Instance.new("Frame", PinGui)
-PinBar.Name = "RonneiCompactBar"
+PinBar.Name = "BayuAjeLahCompactBar"
 PinBar.Size = UDim2.new(0, 310, 0, 28)
 PinBar.Position = UDim2.new(0, 0, 0, -100)
 PinBar.BackgroundColor3 = THEME.BarBG
@@ -663,15 +1297,15 @@ BadgeStroke.Thickness = 1.2
 
 local BadgeGrad = Instance.new("UIGradient", BadgeStroke)
 BadgeGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 230, 120)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 230, 120))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 190, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 180, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 190, 255))
 })
 
 local TikTokText = Instance.new("TextLabel", TikTokBadge)
 TikTokText.Size = UDim2.new(1, 0, 1, 0)
 TikTokText.BackgroundTransparency = 1
-TikTokText.Text = "TikTok: ronnei7.htk"
+TikTokText.Text = "TikTok: BayuAjeLah"
 TikTokText.Font = THEME.FontB
 TikTokText.TextSize = 10
 TikTokText.TextColor3 = THEME.TextMain
@@ -700,7 +1334,7 @@ local StatusLabel = Instance.new("TextLabel", ControlBox)
 StatusLabel.Size = UDim2.new(1, -40, 1, 0)
 StatusLabel.Position = UDim2.new(0, 6, 0, 0)
 StatusLabel.BackgroundTransparency = 1
-StatusLabel.Text = "Tiếng Việt (ON)"
+StatusLabel.Text = "Bahasa Indonesia (ON)"
 StatusLabel.Font = THEME.FontB
 StatusLabel.TextSize = 10
 StatusLabel.TextColor3 = THEME.AccentMint
@@ -724,9 +1358,9 @@ Knob.BorderSizePixel = 0
 Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
 local function updateLanguage(state)
-    isVietnamese = state
-    if isVietnamese then
-        StatusLabel.Text = "Tiếng Việt (ON)"
+    isIndonesian = state
+    if isIndonesian then
+        StatusLabel.Text = "Bahasa Indonesia (ON)"
         StatusLabel.TextColor3 = THEME.AccentMint
         TweenService:Create(SwitchBtn, TweenInfo.new(0.2), {BackgroundColor3 = THEME.AccentMint}):Play()
         TweenService:Create(Knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -12, 0.5, 0)}):Play()
@@ -738,14 +1372,17 @@ local function updateLanguage(state)
     end
 end
 
-SwitchBtn.MouseButton1Click:Connect(function() updateLanguage(not isVietnamese) end)
+SwitchBtn.MouseButton1Click:Connect(function() updateLanguage(not isIndonesian) end)
 ControlBox.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        updateLanguage(not isVietnamese)
+        updateLanguage(not isIndonesian)
     end
 end)
 
--- ==================== 11. BỘ DỊCH TỨC THỜI (CÁCH LY AN TOÀN TUYỆT ĐỐI) ====================
+-- ==============================================================================
+--  SISTEM TERJEMAHAN OTOMATIS (EFISIEN)
+-- ==============================================================================
+
 local translatingSet = {}
 
 local function applyElemTranslation(elem)
@@ -756,20 +1393,20 @@ local function applyElemTranslation(elem)
     local cur = elem.Text
     if not cur or cur == "" then return end
 
-    local lastApplied = elem:GetAttribute("Ronnei_LastApplied")
+    local lastApplied = elem:GetAttribute("BayuAjeLah_LastApplied")
     if cur ~= lastApplied then
         OriginalTexts[elem] = cur
     end
 
     local orig = OriginalTexts[elem] or cur
 
-    if isVietnamese then
-        local vi = translateText(orig)
-        if elem.Text ~= vi then
+    if isIndonesian then
+        local id = translateText(orig)
+        if elem.Text ~= id then
             translatingSet[elem] = true
             pcall(function()
-                elem:SetAttribute("Ronnei_LastApplied", vi)
-                elem.Text = vi
+                elem:SetAttribute("BayuAjeLah_LastApplied", id)
+                elem.Text = id
             end)
             translatingSet[elem] = nil
         end
@@ -777,7 +1414,7 @@ local function applyElemTranslation(elem)
         if elem.Text ~= orig then
             translatingSet[elem] = true
             pcall(function()
-                elem:SetAttribute("Ronnei_LastApplied", nil)
+                elem:SetAttribute("BayuAjeLah_LastApplied", nil)
                 elem.Text = orig
             end)
             translatingSet[elem] = nil
@@ -788,8 +1425,8 @@ end
 local function hookElement(elem)
     if (elem:IsA("TextLabel") or elem:IsA("TextButton")) and not elem:IsDescendantOf(PinGui) then
         pcall(applyElemTranslation, elem)
-        if not elem:GetAttribute("Ronnei_Hooked") then
-            elem:SetAttribute("Ronnei_Hooked", true)
+        if not elem:GetAttribute("BayuAjeLah_TranslationHooked") then
+            elem:SetAttribute("BayuAjeLah_TranslationHooked", true)
             elem:GetPropertyChangedSignal("Text"):Connect(function()
                 pcall(applyElemTranslation, elem)
             end)
@@ -797,74 +1434,16 @@ local function hookElement(elem)
     end
 end
 
--- ==================== 12. BỘ TÌM KIẾM CỬA SỔ ONHUB ====================
-local IDENTIFIERS = {
-    "FARM", "CÀY TIỀN",
-    "PETS", "THÚ CƯNG",
-    "CONFIG", "CẤU HÌNH",
-    "START FARM", "BẮT ĐẦU CÀY",
-    "TARGET FILTER", "BỘ LỌC MỤC TIÊU"
-}
+-- ==============================================================================
+--  PENCARI WINDOW ONHUB (digunakan juga oleh detectPage)
+-- ==============================================================================
 
-local function isDiscordWindow(win)
-    for _, d in ipairs(win:GetDescendants()) do
-        if (d:IsA("TextLabel") or d:IsA("TextButton")) and (d.Text:find("CONTINUE TO HUB", 1, true) or d.Text:find("JOIN OUR DISCORD", 1, true)) then
-            return true
-        end
-    end
-    return false
-end
+-- Fungsi findOnhubWindow sudah didefinisikan di atas
 
-local function findOnhubWindow()
-    local function scanRoot(root)
-        if not root then return nil end
-        local ok, descs = pcall(function() return root:GetDescendants() end)
-        if not ok or not descs then return nil end
-        for _, obj in ipairs(descs) do
-            if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and not obj:IsDescendantOf(PinGui) then
-                local t = obj.Text
-                if t and #t > 0 then
-                    for _, id in ipairs(IDENTIFIERS) do
-                        if t == id or t:find(id, 1, true) then
-                            local p = obj
-                            while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= root do
-                                p = p.Parent
-                            end
-                            if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
-                                if not isDiscordWindow(p) then return p end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        return nil
-    end
+-- ==============================================================================
+--  SINKRONISASI TAMPILAN (PIN BAR)
+-- ==============================================================================
 
-    local found = nil
-    if gethui then found = scanRoot(gethui()) end
-    if not found then found = scanRoot(CoreGuiService) end
-    if not found and LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then found = scanRoot(LocalPlayer.PlayerGui) end
-    if not found and getinstances then
-        for _, ins in ipairs(getinstances()) do
-            if (ins:IsA("TextLabel") or ins:IsA("TextButton")) and not ins:IsDescendantOf(PinGui) then
-                local t = ins.Text
-                if t == "CONFIG" or t == "CẤU HÌNH" or t == "FARM" or t == "CÀY TIỀN" or t == "START FARM" then
-                    local p = ins
-                    while p and p.Parent and not p.Parent:IsA("ScreenGui") and p.Parent ~= game do
-                        p = p.Parent
-                    end
-                    if p and (p:IsA("Frame") or p:IsA("CanvasGroup") or p:IsA("GuiObject")) and p.AbsoluteSize.X > 300 and p.AbsoluteSize.Y > 150 then
-                        if not isDiscordWindow(p) then return p end
-                    end
-                end
-            end
-        end
-    end
-    return found
-end
-
--- ==================== 13. ĐỒNG BỘ HIỂN THỊ TỰ ĐỘNG ====================
 RunService.RenderStepped:Connect(function()
     if targetOnhubWindow and targetOnhubWindow.Parent then
         local winSize = targetOnhubWindow.AbsoluteSize
@@ -884,7 +1463,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ==================== 14. VÒNG LẶP DỊCH RIÊNG BIỆT (KHÔNG BAO GIỜ BỊ CRASH) ====================
+-- ==============================================================================
+--  LOOP TERJEMAHAN (DENGAN THROTTLE)
+-- ==============================================================================
+
 task.spawn(function()
     while true do
         pcall(function()
@@ -901,27 +1483,165 @@ task.spawn(function()
                 end
             end
         end)
-        task.wait(0.25)
+        task.wait(0.5) -- throttle
     end
 end)
 
--- ==================== 15. VÒNG LẶP ÁP DỤNG THÔNG SỐ SLIDERS (ĐỘC LẬP) ====================
+-- ==============================================================================
+--  LOOP PRESET SLIDER
+-- ==============================================================================
+
 task.spawn(function()
     while true do
         pcall(function()
-            -- Ép bộ nhớ bot chạy 1200 và 60
             if not presetMemoryDone then
                 applyMemoryPresets()
             end
-
-            -- Ép giao diện khi cửa sổ được mở
             if targetOnhubWindow and not presetUIDone then
                 applyUISliderPresets(targetOnhubWindow)
             end
         end)
-        if presetMemoryDone and presetUIDone then
-            break -- Đã cài đặt xong hoàn toàn, tự giải phóng vòng lặp
-        end
+        if presetMemoryDone and presetUIDone then break end
         task.wait(0.5)
     end
 end)
+
+-- ==============================================================================
+--  MODULE START FARM (INSTANT TP + AUTO SAFEZONE) - TIDAK TERPENGARUH UI
+-- ==============================================================================
+
+task.spawn(function()
+    local SAFEZONE_POSITION = Vector3.new(0, 10, 0)  -- GANTI DENGAN POSISI SAFEZONE ANDA
+
+    local function instantTeleport(targetPos)
+        if not targetPos then return false end
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return false end
+
+        -- Cari prompt terdekat untuk membuka ragdoll window
+        local success = false
+        for _, prompt in ipairs(Workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and prompt.Enabled then
+                local part = prompt:FindFirstAncestorOfClass("BasePart")
+                if part and (part.Position - hrp.Position).Magnitude < 50 then
+                    pcall(function()
+                        if fireproximityprompt then
+                            fireproximityprompt(prompt, 0)
+                        else
+                            prompt:InputHoldBegin()
+                            task.wait(0.01)
+                            prompt:InputHoldEnd()
+                        end
+                    end)
+                    task.wait(0.05) -- tunggu ragdoll window terbuka
+                    hrp.CFrame = CFrame.new(targetPos)
+                    success = true
+                    break
+                end
+            end
+        end
+
+        if not success then
+            pcall(function()
+                hrp.CFrame = CFrame.new(targetPos)
+            end)
+        end
+        return true
+    end
+
+    local function teleportToSafezone()
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            instantTeleport(SAFEZONE_POSITION)
+            print("[Farm] Teleport ke safezone")
+        end
+    end
+
+    local function getNextTarget()
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return nil end
+        local bestTarget = nil
+        local bestDist = math.huge
+
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Name:lower():find("egg") and obj.Parent and not obj.Parent:FindFirstChild("Humanoid") then
+                local dist = (obj.Position - hrp.Position).Magnitude
+                if dist < bestDist and dist < 200 then
+                    bestDist = dist
+                    bestTarget = obj
+                end
+            end
+        end
+        return bestTarget
+    end
+
+    local function runCycle()
+        local target = getNextTarget()
+        if not target then
+            print("[Farm] Tidak ada target, kembali ke safezone")
+            teleportToSafezone()
+            return
+        end
+
+        print("[Farm] Instant TP ke", target.Name)
+        instantTeleport(target.Position + Vector3.new(0, 2, 0))
+        task.wait(0.5) -- waktu untuk mengambil (floor steal sudah aktif)
+        teleportToSafezone()
+    end
+
+    local farming = false
+    local farmTask = nil
+
+    local function startFarming()
+        if farming then return end
+        farming = true
+        farmTask = task.spawn(function()
+            while farming do
+                pcall(runCycle)
+                task.wait(1) -- jeda antar siklus
+            end
+        end)
+        print("[Farm] Farming dimulai dengan Instant TP + Auto Safezone")
+    end
+
+    local function stopFarming()
+        farming = false
+        if farmTask then
+            task.cancel(farmTask)
+            farmTask = nil
+        end
+        print("[Farm] Farming dihentikan")
+    end
+
+    -- Tunggu window dan tombol
+    while not targetOnhubWindow do
+        task.wait(0.5)
+        targetOnhubWindow = findOnhubWindow()
+    end
+
+    local startBtn, stopBtn = nil, nil
+    for _, child in ipairs(targetOnhubWindow:GetDescendants()) do
+        if child:IsA("TextButton") then
+            local txt = child.Text
+            if txt == "START FARM" or txt == "MULAI FARMING" or txt == "BẮT ĐẦU" then
+                startBtn = child
+            elseif txt == "STOP FARM" or txt == "HENTIKAN FARMING" or txt == "DỪNG" then
+                stopBtn = child
+            end
+        end
+    end
+
+    if startBtn then
+        startBtn.MouseButton1Click:Connect(startFarming)
+    end
+    if stopBtn then
+        stopBtn.MouseButton1Click:Connect(stopFarming)
+    end
+end)
+
+-- ==============================================================================
+--  SELESAI
+-- ==============================================================================

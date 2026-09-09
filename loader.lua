@@ -1,5 +1,121 @@
+
 -- ==============================================================================
---  RONNEI HUB - ONHUB MASTER EDITION [UPDATE v3.6]
+-- BAYUAJELAH UI THEME PATCH
+-- UI-only: blue glassmorphism + optional local JPG background.
+-- Put bayu_background.jpg beside the script when using an executor that supports
+-- getcustomasset/getsynasset. No gameplay logic is changed by this patch.
+-- ==============================================================================
+local BAYU_BACKGROUND_FILE = "bayu_background.jpg"
+
+local function bayuGetBackgroundAsset()
+    local ok, asset = pcall(function()
+        if getcustomasset then
+            return getcustomasset(BAYU_BACKGROUND_FILE)
+        elseif getsynasset then
+            return getsynasset(BAYU_BACKGROUND_FILE)
+        end
+    end)
+    if ok and asset and asset ~= "" then
+        return asset
+    end
+    return nil
+end
+
+local function bayuGlassify(root)
+    if not root or not root:IsA("GuiObject") then return end
+
+    local baseZ = math.max(root.ZIndex, 1)
+    root.BackgroundColor3 = Color3.fromRGB(5, 28, 58)
+    root.BackgroundTransparency = 0.08
+    root.BorderSizePixel = 0
+    root.ClipsDescendants = true
+
+    local function visualCard(obj)
+        if not obj.Visible then return false end
+        if obj:IsA("TextButton") or obj:IsA("ImageButton") or obj:IsA("ScrollingFrame") then return true end
+        if not obj:IsA("Frame") and not obj:IsA("CanvasGroup") then return false end
+        local s = obj.AbsoluteSize
+        if s.X < 70 or s.Y < 28 then return false end
+        if obj.Parent and obj.Parent:IsA("ScrollingFrame") then return true end
+        if s.X > 180 and s.Y > 60 then return true end
+        return false
+    end
+
+    for _, child in ipairs(root:GetChildren()) do
+        if child:IsA("GuiObject") then
+            if child.Name:find("Background") or child.Name:find("_SafeBackground") then
+                child.ZIndex = baseZ
+            elseif visualCard(child) then
+                child.BackgroundColor3 = Color3.fromRGB(10, 65, 125)
+                child.BackgroundTransparency = 0.18
+                child.BorderSizePixel = 0
+                child.ZIndex = math.max(child.ZIndex, baseZ + 1)
+
+                local corner = child:FindFirstChild("BayuAjeLah_GlassCorner")
+                if not corner then
+                    corner = Instance.new("UICorner")
+                    corner.Name = "BayuAjeLah_GlassCorner"
+                    corner.CornerRadius = UDim.new(0, 10)
+                    corner.Parent = child
+                end
+                local stroke = child:FindFirstChild("BayuAjeLah_GlassStroke")
+                if not stroke then
+                    stroke = Instance.new("UIStroke")
+                    stroke.Name = "BayuAjeLah_GlassStroke"
+                    stroke.Color = Color3.fromRGB(65, 175, 240)
+                    stroke.Transparency = 0.38
+                    stroke.Thickness = 1
+                    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                    stroke.Parent = child
+                end
+            end
+        end
+    end
+
+    for _, obj in ipairs(root:GetDescendants()) do
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            obj.ZIndex = math.max(obj.ZIndex, baseZ + 2)
+        end
+    end
+end
+
+local function bayuAddBackground(root)
+    if not root or not root:IsA("GuiObject") then return nil end
+    local old = root:FindFirstChild("BayuAjeLah_SafeBackground")
+    if old then return old end
+    local asset = bayuGetBackgroundAsset()
+    if not asset then return nil end
+
+    local bg = Instance.new("ImageLabel")
+    bg.Name = "BayuAjeLah_SafeBackground"
+    bg.BackgroundTransparency = 1
+    bg.BorderSizePixel = 0
+    bg.Size = UDim2.fromScale(1, 1)
+    bg.Position = UDim2.fromScale(0, 0)
+    bg.Image = asset
+    bg.ScaleType = Enum.ScaleType.Crop
+    bg.ImageTransparency = 0.24
+    bg.Active = false
+    bg.Selectable = false
+    bg.ZIndex = math.max(0, root.ZIndex)
+    bg.Parent = root
+
+    for _, child in ipairs(root:GetChildren()) do
+        if child ~= bg and child:IsA("GuiObject") then
+            child.ZIndex = math.max(child.ZIndex, bg.ZIndex + 1)
+        end
+    end
+    return bg
+end
+
+local function bayuApplyGlass(root)
+    if not root then return end
+    if root:IsA("GuiObject") then bayuAddBackground(root) end
+    if root:IsA("GuiObject") then bayuGlassify(root) end
+end
+
+-- ==============================================================================
+--  BAYUAJELAH HUB - ONHUB MASTER EDITION [UPDATE v3.6]
 --  Bảng thông báo v3.6 | Mặc định TP 1200m/Hop 60m | Fix Pet mọi máy | Anti Trap/Ragdoll | Dịch 100%
 -- ==============================================================================
 
@@ -16,34 +132,34 @@ local LocalPlayer = Players.LocalPlayer
 
 -- ==================== THEME CẤU HÌNH GIAO DIỆN ====================
 local THEME = {
-    BarBG      = Color3.fromRGB(15, 25, 18),
-    CardBG     = Color3.fromRGB(20, 36, 26),
-    ModalBG    = Color3.fromRGB(12, 20, 15),
-    Border     = Color3.fromRGB(40, 80, 50),
-    AccentMint = Color3.fromRGB(0, 230, 120),
+    BarBG      = Color3.fromRGB(8, 35, 75),
+    CardBG     = Color3.fromRGB(10, 65, 125),
+    ModalBG    = Color3.fromRGB(6, 28, 60),
+    Border     = Color3.fromRGB(65, 165, 235),
+    AccentMint = Color3.fromRGB(55, 190, 255),
     ToggleOff  = Color3.fromRGB(38, 43, 56),
     TextMain   = Color3.fromRGB(245, 248, 255),
-    TextSub    = Color3.fromRGB(160, 190, 170),
+    TextSub    = Color3.fromRGB(165, 215, 245),
     FontB      = Enum.Font.GothamBold,
     FontM      = Enum.Font.GothamMedium
 }
 
 -- Dọn sạch phiên bản cũ
 local cleanList = {
-    "Ronnei_ONhub_DockedMaster",
-    "Ronnei_HeaderDockedMaster",
-    "Ronnei_PerfectDockMaster",
-    "Ronnei_ONhub_CompactMaster",
-    "Ronnei_ONhub_UltimateConfig",
-    "Ronnei_ONhub_AutoBypassMaster",
-    "Ronnei_ONhub_EncryptedMaster",
-    "Ronnei_ONhub_UltraPotatoMaster",
-    "Ronnei_ONhub_AntiTrapRagdollMaster",
-    "Ronnei_ONhub_HardLockedMaster",
-    "Ronnei_ONhub_FloorStealMaster",
-    "Ronnei_ONhub_CleanInteractMaster",
-    "Ronnei_ONhub_FinalDeviceFixed",
-    "Ronnei_ONhub_v36_Master"
+    "BayuAjeLah_ONhub_DockedMaster",
+    "BayuAjeLah_HeaderDockedMaster",
+    "BayuAjeLah_PerfectDockMaster",
+    "BayuAjeLah_ONhub_CompactMaster",
+    "BayuAjeLah_ONhub_UltimateConfig",
+    "BayuAjeLah_ONhub_AutoBypassMaster",
+    "BayuAjeLah_ONhub_EncryptedMaster",
+    "BayuAjeLah_ONhub_UltraPotatoMaster",
+    "BayuAjeLah_ONhub_AntiTrapRagdollMaster",
+    "BayuAjeLah_ONhub_HardLockedMaster",
+    "BayuAjeLah_ONhub_FloorStealMaster",
+    "BayuAjeLah_ONhub_CleanInteractMaster",
+    "BayuAjeLah_ONhub_FinalDeviceFixed",
+    "BayuAjeLah_ONhub_v36_Master"
 }
 for _, name in ipairs(cleanList) do
     pcall(function()
@@ -53,11 +169,14 @@ for _, name in ipairs(cleanList) do
 end
 
 local MainGui = Instance.new("ScreenGui")
-MainGui.Name = "Ronnei_ONhub_v36_Master"
+MainGui.Name = "BayuAjeLah_ONhub_v36_Master"
 MainGui.ResetOnSpawn = false
 MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 MainGui.DisplayOrder = 999999
 MainGui.Parent = (gethui and gethui()) or CoreGuiService
+
+-- BayuAjeLah blue glass background/theme
+bayuApplyGlass(MainGui)
 
 -- ==================== BẢNG THÔNG BÁO CẬP NHẬT v3.6 ====================
 local function createUpdateModal()
@@ -86,7 +205,7 @@ local function createUpdateModal()
     Title.Size = UDim2.new(1, -50, 1, 0)
     Title.Position = UDim2.new(0, 14, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "RONNEI HUB - BẢN CẬP NHẬT v3.6"
+    Title.Text = "BAYUAJELAH HUB - BẢN CẬP NHẬT v3.6"
     Title.Font = THEME.FontB
     Title.TextSize = 13
     Title.TextColor3 = THEME.AccentMint
@@ -166,26 +285,93 @@ local function createUpdateModal()
 end
 task.spawn(createUpdateModal)
 
--- ==================== 1. FIX BẢNG PET & TỐI ƯU HIỂN THỊ ====================
+-- ==================== 1. FIX PET VIEW: HANYA TAMPIL DI MENU PETS ====================
+-- Versi lama memaksa semua Frame bernama pet/list dan semua ScrollingFrame
+-- menjadi Visible. Itu yang membuat View Pets ikut muncul/menimpa menu FARM.
+local function isPetsTabActive(container)
+    if not container then return false end
+    local petsButton = nil
+    for _, obj in ipairs(container:GetDescendants()) do
+        if (obj:IsA("TextButton") or obj:IsA("TextLabel")) then
+            local text = tostring(obj.Text or ""):upper()
+            if text == "PETS" or text == "HEWAN" or text == "THÚ CƯNG" then
+                petsButton = obj
+                break
+            end
+        end
+    end
+    if not petsButton then return false end
+
+    -- Tab aktif biasanya memiliki warna background yang lebih terang.
+    if petsButton:IsA("TextButton") then
+        local c = petsButton.BackgroundColor3
+        if c and (c.R > 0.35 or c.G > 0.45 or c.B > 0.55) and petsButton.BackgroundTransparency < 0.8 then
+            return true
+        end
+    end
+
+    -- Beberapa versi UI memakai indicator kecil di parent tab.
+    local parent = petsButton.Parent
+    if parent then
+        for _, sibling in ipairs(parent:GetChildren()) do
+            if sibling:IsA("Frame") and sibling ~= petsButton then
+                if sibling.AbsoluteSize.X > 20 and sibling.AbsoluteSize.Y <= 8 and sibling.Position.Y.Scale > 0.7 then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+local function looksLikePetView(obj)
+    if not obj or not obj:IsA("GuiObject") then return false end
+    local name = obj.Name:lower()
+    local size = obj.AbsoluteSize
+    if name:find("viewpets", 1, true) or name:find("view_pets", 1, true) or name:find("petview", 1, true) then
+        return true
+    end
+    -- Hanya target tombol/card PETS kecil. Jangan pernah menyembunyikan
+    -- window utama atau container halaman karena keduanya juga berisi teks pet.
+    if size.X < 55 or size.Y < 35 or size.X > 320 or size.Y > 260 then return false end
+    local rarityHit, petNameHit, viewportHit, imageHit = false, false, false, false
+    local rarities = {"DIVINE", "ETERNAL", "COSMIC", "SECRET", "MYTHIC", "LEGENDARY"}
+    local names = {"ARCHDEMON DRAGON", "DREADSCALE", "KITSUNE", "MECHA DREADSCALE", "NIGHTFLAME", "SHATTERED COLOSSUS", "UNICORN", "BAIROG", "SPIDERON", "FROST WYRM", "PHOENIX", "LEVIATHAN"}
+    for _, d in ipairs(obj:GetDescendants()) do
+        if d:IsA("ViewportFrame") then viewportHit = true end
+        if d:IsA("ImageLabel") or d:IsA("ImageButton") then imageHit = true end
+        if d:IsA("TextLabel") or d:IsA("TextButton") then
+            local t = tostring(d.Text or ""):upper()
+            if t:find("VIEW PETS", 1, true) or t:find("VIEWPETS", 1, true) then return true end
+            for _, rarity in ipairs(rarities) do if t == rarity then rarityHit = true break end end
+            for _, petName in ipairs(names) do if t == petName then petNameHit = true break end end
+        end
+    end
+    return (rarityHit and (petNameHit or viewportHit or imageHit)) or (petNameHit and viewportHit)
+end
+
 local function fixPetTableLayout(container)
     if not container then return end
     pcall(function()
+        local petsActive = isPetsTabActive(container)
         for _, obj in ipairs(container:GetDescendants()) do
             if obj:IsA("CanvasGroup") then
                 obj.GroupTransparency = 0
             end
             if obj:IsA("ScrollingFrame") then
-                obj.Visible = true
-                obj.ClipsDescendants = false
+                -- Jangan memaksa halaman lain menjadi visible.
                 obj.ScrollBarImageTransparency = 0.2
                 if obj.CanvasSize.Y.Offset == 0 and obj.CanvasSize.Y.Scale == 0 then
                     obj.AutomaticCanvasSize = Enum.AutomaticSize.Y
                     obj.CanvasSize = UDim2.new(0, 0, 2, 0)
                 end
             end
-            if obj:IsA("Frame") and (obj.Name:lower():find("target") or obj.Name:lower():find("pet") or obj.Name:lower():find("list")) then
-                obj.Visible = true
-                obj.ClipsDescendants = false
+            if looksLikePetView(obj) then
+                obj.Visible = petsActive
+                if petsActive then
+                    obj.ClipsDescendants = false
+                end
             end
         end
     end)
@@ -765,7 +951,7 @@ local targetOnhubWindow = nil
 local isApplyingTranslation = false
 
 local PinBar = Instance.new("Frame", MainGui)
-PinBar.Name = "RonneiCompactBar"
+PinBar.Name = "BayuAjeLahCompactBar"
 PinBar.Size = UDim2.new(0, 310, 0, 28)
 PinBar.Position = UDim2.new(0, 0, 0, -100)
 PinBar.BackgroundColor3 = THEME.BarBG
@@ -812,15 +998,15 @@ BadgeStroke.Thickness = 1.2
 
 local BadgeGrad = Instance.new("UIGradient", BadgeStroke)
 BadgeGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 230, 120)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 200, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 230, 120))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 190, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 180, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(55, 190, 255))
 })
 
 local TikTokText = Instance.new("TextLabel", TikTokBadge)
 TikTokText.Size = UDim2.new(1, 0, 1, 0)
 TikTokText.BackgroundTransparency = 1
-TikTokText.Text = "TikTok: ronnei7.htk"
+TikTokText.Text = "TikTok: BayuAjeLah"
 TikTokText.Font = THEME.FontB
 TikTokText.TextSize = 10
 TikTokText.TextColor3 = THEME.TextMain
@@ -903,7 +1089,7 @@ local function applyElemTranslation(elem)
     local cur = elem.Text
     if not cur or cur == "" then return end
 
-    local lastApplied = elem:GetAttribute("Ronnei_LastApplied")
+    local lastApplied = elem:GetAttribute("BayuAjeLah_LastApplied")
     if cur ~= lastApplied then
         OriginalTexts[elem] = cur
     end
@@ -914,14 +1100,14 @@ local function applyElemTranslation(elem)
         local vi = translateText(orig)
         if elem.Text ~= vi then
             isApplyingTranslation = true
-            elem:SetAttribute("Ronnei_LastApplied", vi)
+            elem:SetAttribute("BayuAjeLah_LastApplied", vi)
             elem.Text = vi
             isApplyingTranslation = false
         end
     else
         if elem.Text ~= orig then
             isApplyingTranslation = true
-            elem:SetAttribute("Ronnei_LastApplied", nil)
+            elem:SetAttribute("BayuAjeLah_LastApplied", nil)
             elem.Text = orig
             isApplyingTranslation = false
         end
@@ -931,8 +1117,8 @@ end
 local function hookElement(elem)
     if (elem:IsA("TextLabel") or elem:IsA("TextButton")) and not elem:IsDescendantOf(MainGui) then
         applyElemTranslation(elem)
-        if not elem:GetAttribute("Ronnei_Hooked") then
-            elem:SetAttribute("Ronnei_Hooked", true)
+        if not elem:GetAttribute("BayuAjeLah_Hooked") then
+            elem:SetAttribute("BayuAjeLah_Hooked", true)
             elem:GetPropertyChangedSignal("Text"):Connect(function()
                 applyElemTranslation(elem)
             end)
@@ -1036,6 +1222,7 @@ task.spawn(function()
             end
 
             if targetOnhubWindow then
+                bayuApplyGlass(targetOnhubWindow)
                 fixPetTableLayout(targetOnhubWindow)
 
                 if not appliedDefaultSliders then
